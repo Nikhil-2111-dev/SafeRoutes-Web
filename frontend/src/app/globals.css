@@ -1,0 +1,74 @@
+@import "tailwindcss";
+
+@theme inline {
+  --color-primary: #0f172a; /* Deep Slate Blue */
+  --color-primary-hover: #1e293b;
+  --color-secondary: #0d9488; /* Teal */
+  --color-secondary-hover: #0f766e;
+  --color-danger: #e11d48; /* Red/SOS */
+  --color-danger-hover: #be123c;
+  --color-warning: #f59e0b; /* Yellow */
+  --color-safe: #10b981; /* Emerald */
+  
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+}
+
+:root {
+  --background: #f8fafc;
+  --foreground: #0f172a;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: #0f172a;
+    --foreground: #f8fafc;
+  }
+}
+
+body {
+  background-color: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-sans), Arial, Helvetica, sans-serif;
+  margin: 0;
+  padding: 0;
+}
+
+/* Custom MapLibre Geolocate Control Styles */
+.maplibregl-ctrl-bottom-right .maplibregl-ctrl-group {
+  background-color: #fff !important;
+  border-radius: 50% !important;
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.3) !important;
+  border: 2px solid #000 !important;
+  margin-bottom: 30px !important; /* Give it some breathing room from the bottom edge */
+  margin-right: 20px !important;
+  transition: all 0.2s ease-in-out !important;
+}
+
+.maplibregl-ctrl-bottom-right .maplibregl-ctrl-geolocate {
+  width: 64px !important;
+  height: 64px !important;
+  background-color: transparent !important;
+}
+
+.maplibregl-ctrl-bottom-right .maplibregl-ctrl-geolocate .maplibregl-ctrl-icon {
+  width: 100% !important;
+  height: 100% !important;
+  filter: brightness(0) !important; /* Enforce pure black icon */
+  background-size: 60% !important; /* Make the icon nicely scaled inside the big button */
+  transition: all 0.2s ease-in-out !important;
+}
+
+/* Hover state: turn button blue and icon white */
+.maplibregl-ctrl-bottom-right .maplibregl-ctrl-group:hover {
+  background-color: #007bff !important; /* Vibrant Blue */
+  border-color: #007bff !important;
+  box-shadow: 0 8px 24px rgba(0, 123, 255, 0.4) !important;
+  transform: translateY(-2px);
+}
+
+.maplibregl-ctrl-bottom-right .maplibregl-ctrl-group:hover .maplibregl-ctrl-icon {
+  filter: brightness(0) invert(1) !important; /* Pure white icon */
+}
