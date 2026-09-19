@@ -3,18 +3,10 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import Map, { Marker, NavigationControl, GeolocateControl, MapRef } from 'react-map-gl/maplibre';
 import 'maplibre-gl/dist/maplibre-gl.css';
 
-interface Pin {
-  id: string;
-  latitude: number;
-  longitude: number;
-  type: string;
-  description: string;
-}
-
 export default function MapComponent() {
-  const [pins, setPins] = useState<Pin[]>([]);
   const [userLocation, setUserLocation] = useState<{lat: number, lng: number} | null>(null);
   const mapRef = useRef<MapRef>(null);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const geoControlRef = useRef<any>(null);
 
   useEffect(() => {
@@ -25,10 +17,6 @@ export default function MapComponent() {
       }
     }, 1000);
     return () => clearTimeout(timer);
-  }, []);
-
-  useEffect(() => {
-    // Optionally fetch other map data here
   }, []);
 
   // For AWS Hackathons: If you configure Identity Pool, we use AWS Maps. Otherwise, fallback to Carto Dark Matter.
@@ -53,7 +41,7 @@ export default function MapComponent() {
     }).catch(err => console.warn('Failed to sync location to backend:', err));
   }, []);
 
-  const onMapLoad = useCallback((e: any) => {
+  const onMapLoad = useCallback(() => {
     // Globe projection was causing the location marker to disappear on certain zoom levels.
     // Keeping default Mercator for better marker stability.
   }, []);
@@ -73,7 +61,7 @@ export default function MapComponent() {
         style={{ width: '100%', height: '100%' }}
         renderWorldCopies={false}
       >
-        <NavigationControl position="top-left" />
+        <NavigationControl position="bottom-right" />
         
         {/* Custom Highly Reliable User Location Dot */}
         {userLocation && (
@@ -94,7 +82,6 @@ export default function MapComponent() {
           positionOptions={{ enableHighAccuracy: true, timeout: 5000, maximumAge: 0 }}
           trackUserLocation={true}
           showUserLocation={false} 
-          showUserHeading={true}
           showAccuracyCircle={true} 
           onGeolocate={onGeolocate}
         />
