@@ -1,13 +1,19 @@
 import { Router } from 'express';
 import { TrackerService } from '../services/tracker.service';
 import { GeofenceService } from '../services/geofence.service';
+import { requireAuth } from '../middleware/auth.middleware';
 
 const router = Router();
 const trackerService = new TrackerService();
 const geofenceService = new GeofenceService();
 
-router.post('/', async (req, res) => {
-  const { deviceId = 'anonymous-device', latitude, longitude } = req.body;
+router.post('/', requireAuth, async (req, res) => {
+  const deviceId = req.user?.sub;
+  const { latitude, longitude } = req.body;
+
+  if (!deviceId) {
+    return res.status(401).json({ error: 'Unauthorized: Missing user identity' });
+  }
 
   if (!latitude || !longitude) {
     return res.status(400).json({ error: 'Latitude and longitude are required' });
