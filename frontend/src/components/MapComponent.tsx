@@ -448,8 +448,12 @@ export default function MapComponent() {
     }
 
     const socket: Socket = io(rawApiUrl || 'http://localhost:5000');
-    socket.on('new_incident', (incident: Incident) => {
-      setIncidents(prev => [...prev, incident]);
+    socket.on('new_incident', (incident: any) => {
+      setIncidents(prev => [...prev, {
+        ...incident,
+        incidentId: incident.incidentId || incident.id || Math.random().toString(),
+        category: incident.category || incident.incidentType || incident.type || 'general'
+      }]);
       
       // Authoritative Recalculation
       // The backend handles the complex logic. We just ask it for the new routes.
@@ -495,13 +499,19 @@ export default function MapComponent() {
           setIncidents(data.map((pin: any) => ({
             ...pin,
             incidentId: pin.id || pin._id || Math.random().toString(),
-            category: pin.category || pin.type || 'general',
+            category: pin.category || pin.incidentType || pin.type || 'general',
           })));
         } else {
           // fallback to /incidents if pins not configured yet
           const res2 = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'}/api/v1/incidents`);
           const data2 = await res2.json();
-          if (data2.success) setIncidents(data2.incidents || []);
+          if (data2.success) {
+            setIncidents((data2.incidents || []).map((inc: any) => ({
+              ...inc,
+              incidentId: inc.incidentId || inc.id || Math.random().toString(),
+              category: inc.category || inc.incidentType || inc.type || 'general',
+            })));
+          }
         }
       } catch (e) {
         console.warn("Failed to fetch pins:", e);
