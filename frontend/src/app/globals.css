@@ -73,11 +73,164 @@ body {
   filter: brightness(0) invert(1) !important; /* Pure white icon */
 }
 
-/* Hide scrollbars for cleaner UI */
-.hide-scrollbar {
-  -ms-overflow-style: none;  /* IE and Edge */
-  scrollbar-width: none;  /* Firefox */
+/* ==========================================================================
+   Cinematic SafeRoute Animations & Navigation Visuals
+   ========================================================================== */
+
+@keyframes routeFlow {
+  from {
+    stroke-dashoffset: 60;
+  }
+  to {
+    stroke-dashoffset: 0;
+  }
 }
-.hide-scrollbar::-webkit-scrollbar {
-  display: none; /* Chrome, Safari and Opera */
+
+@keyframes routePulse {
+  0%, 100% {
+    opacity: 0.85;
+    filter: drop-shadow(0 0 8px rgba(20, 184, 166, 0.6));
+  }
+  50% {
+    opacity: 1;
+    filter: drop-shadow(0 0 20px rgba(45, 212, 191, 0.9));
+  }
 }
+
+@keyframes beaconWave {
+  0% {
+    transform: scale(0.9);
+    opacity: 0.8;
+  }
+  50% {
+    transform: scale(1.6);
+    opacity: 0;
+  }
+  100% {
+    transform: scale(0.9);
+    opacity: 0;
+  }
+}
+
+@keyframes floatEthereal {
+  0%, 100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-8px);
+  }
+}
+
+@keyframes radarSweep {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.animate-route-flow {
+  animation: routeFlow 2.5s linear infinite;
+}
+
+.animate-route-pulse {
+  animation: routePulse 3s ease-in-out infinite;
+}
+
+.animate-beacon-wave {
+  animation: beaconWave 3s cubic-bezier(0, 0.2, 0.8, 1) infinite;
+}
+
+.animate-float-slow {
+  animation: floatEthereal 8s ease-in-out infinite;
+}
+
+.animate-radar-sweep {
+  animation: radarSweep 7s linear infinite;
+  transform-origin: center;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+@keyframes drawRouteLine {
+  from {
+    stroke-dashoffset: 1000;
+  }
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+.animate-draw-line {
+  stroke-dasharray: 1000;
+  stroke-dashoffset: 1000;
+  animation: drawRouteLine 2.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.reveal-base {
+  opacity: 0;
+  transform: translateY(24px);
+  transition: opacity 0.85s cubic-bezier(0.16, 1, 0.3, 1), transform 0.85s cubic-bezier(0.16, 1, 0.3, 1);
+  will-change: opacity, transform;
+}
+
+.reveal-active {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+@keyframes connectorPulse {
+  0% {
+    stroke-dashoffset: 240;
+    opacity: 0.3;
+  }
+  50% {
+    opacity: 1;
+  }
+  100% {
+    stroke-dashoffset: 0;
+    opacity: 0.3;
+  }
+}
+
+.animate-connector-flow {
+  stroke-dasharray: 20 80;
+  animation: connectorPulse 3s linear infinite;
+}
+
+@keyframes tracerPulse {
+  0%, 100% {
+    transform: scale(1);
+    filter: drop-shadow(0 0 6px #00dfc0);
+  }
+  50% {
+    transform: scale(1.3);
+    filter: drop-shadow(0 0 16px #38bdf8);
+  }
+}
+
+.animate-tracer-pulse {
+  animation: tracerPulse 2s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-route-flow,
+  .animate-route-pulse,
+  .animate-beacon-wave,
+  .animate-float-slow,
+  .animate-radar-sweep,
+  .animate-draw-line,
+  .animate-connector-flow,
+  .animate-tracer-pulse {
+    animation: none !important;
+  }
+  .reveal-base {
+    opacity: 1 !important;
+    transform: none !important;
+    transition: none !important;
+  }
+}
+
