@@ -33,22 +33,7 @@ export default function DashboardPage() {
         <div className="absolute inset-0 z-0 bg-[#0a0a0a]">
           <MapComponent />
         </div>
-
-        {/* Floating Top Bar */}
-        <div className="absolute top-6 left-6 right-6 z-10 flex justify-between items-start pointer-events-none">
-          <div className="flex gap-4 pointer-events-auto">
-            {/* Top Bar Widgets */}
-            <div className="bg-[#1c1c1c]/90 backdrop-blur-md border border-white/5 rounded-xl px-4 py-2 flex items-center gap-3">
-              <span className="text-white/50 text-sm">Active Alerts</span>
-              <span className="text-[#e5ff00] font-bold">12</span>
-            </div>
-            <div className="bg-[#1c1c1c]/90 backdrop-blur-md border border-white/5 text-white/80 rounded-xl px-4 py-2 flex items-center gap-2 font-medium text-sm">
-              <svg className="w-4 h-4 text-safe" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd"/></svg>
-              Area Secure
-            </div>
-          </div>
-        </div>
-        </div>
+      </div>
       </main>
       <SOSModal isOpen={isSOSOpen} onClose={() => setIsSOSOpen(false)} />
     </ProtectedRoute>

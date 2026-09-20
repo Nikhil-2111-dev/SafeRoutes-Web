@@ -4,6 +4,7 @@ import Map, { Marker, Popup, Source, Layer, LayerProps, NavigationControl, MapRe
 import { fetchAuthSession } from 'aws-amplify/auth';
 import 'maplibre-gl/dist/maplibre-gl.css';
 import { io, Socket } from 'socket.io-client';
+import { toast } from 'react-hot-toast';
 import { Search, Navigation2, Plus, Minus, MapPin, X, LocateFixed, Route, PanelRightClose, PanelRightOpen, ArrowRight, Zap, ShieldCheck, Scale, Clock, Gauge } from 'lucide-react';
 import { usePOIs } from '../hooks/usePOIs';
 import { loadPOIIcons } from '../utils/poiIcons';
@@ -524,51 +525,15 @@ export default function MapComponent() {
         const center = mapRef.current?.getMap()?.getCenter();
         const biasPosition = center ? [center.lng, center.lat] : (latestLocationRef.current ? [latestLocationRef.current.lng, latestLocationRef.current.lat] : undefined);
         
-        let results = null;
-        const apiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
-        
-        if (apiKey) {
-          try {
-            const body: any = { input: query, includedRegionCodes: ["IN"] };
-            if (biasPosition) {
-              body.locationBias = {
-                circle: {
-                  center: { latitude: biasPosition[1], longitude: biasPosition[0] },
-                  radius: 50000.0
-                }
-              };
-            }
-            const gRes = await fetch(`https://places.googleapis.com/v1/places:autocomplete`, {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json', 'X-Goog-Api-Key': apiKey },
-              body: JSON.stringify(body),
-              signal: originAbortRef.current.signal
-            });
-            if (gRes.ok) {
-              const gData = await gRes.json();
-              results = (gData.suggestions || []).map((s: any) => ({
-                placeId: s.placePrediction.placeId,
-                label: s.placePrediction.text.text
-              }));
-            }
-          } catch (err: any) {
-            if (err.name !== 'AbortError') console.warn('Google Places Autocomplete failed, falling back...', err);
-            else throw err;
-          }
-        }
-
-        if (!results) {
-          const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'}/api/v1/search`, {
-            method: 'POST', 
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ query, biasPosition }),
-            signal: originAbortRef.current.signal
-          });
-          const data = await res.json();
-          results = data.success ? (data.results || []) : [];
-        }
-        
-        setOriginResults(results || []);
+        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'}/api/v1/search`, {
+          method: 'POST', 
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ query, biasPosition }),
+          signal: originAbortRef.current.signal
+        });
+        const data = await res.json();
+        const results = data.success ? (data.results || []) : [];
+        setOriginResults(results);
       } catch (err: any) {
         if (err.name !== 'AbortError') {
           setOriginResults([]);
@@ -576,7 +541,7 @@ export default function MapComponent() {
       } finally {
         setIsSearchingOrigin(false);
       }
-    }, 250);
+    }, 200);
   };
 
   const searchDest = (query: string) => {
@@ -601,51 +566,15 @@ export default function MapComponent() {
         const center = mapRef.current?.getMap()?.getCenter();
         const biasPosition = center ? [center.lng, center.lat] : (latestLocationRef.current ? [latestLocationRef.current.lng, latestLocationRef.current.lat] : undefined);
         
-        let results = null;
-        const apiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
-        
-        if (apiKey) {
-          try {
-            const body: any = { input: query, includedRegionCodes: ["IN"] };
-            if (biasPosition) {
-              body.locationBias = {
-                circle: {
-                  center: { latitude: biasPosition[1], longitude: biasPosition[0] },
-                  radius: 50000.0
-                }
-              };
-            }
-            const gRes = await fetch(`https://places.googleapis.com/v1/places:autocomplete`, {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json', 'X-Goog-Api-Key': apiKey },
-              body: JSON.stringify(body),
-              signal: destAbortRef.current.signal
-            });
-            if (gRes.ok) {
-              const gData = await gRes.json();
-              results = (gData.suggestions || []).map((s: any) => ({
-                placeId: s.placePrediction.placeId,
-                label: s.placePrediction.text.text
-              }));
-            }
-          } catch (err: any) {
-            if (err.name !== 'AbortError') console.warn('Google Places Autocomplete failed, falling back...', err);
-            else throw err;
-          }
-        }
-
-        if (!results) {
-          const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'}/api/v1/search`, {
-            method: 'POST', 
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ query, biasPosition }),
-            signal: destAbortRef.current.signal
-          });
-          const data = await res.json();
-          results = data.success ? (data.results || []) : [];
-        }
-        
-        setDestResults(results || []);
+        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'}/api/v1/search`, {
+          method: 'POST', 
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ query, biasPosition }),
+          signal: destAbortRef.current.signal
+        });
+        const data = await res.json();
+        const results = data.success ? (data.results || []) : [];
+        setDestResults(results);
       } catch (err: any) {
         if (err.name !== 'AbortError') {
           setDestResults([]);
@@ -653,7 +582,7 @@ export default function MapComponent() {
       } finally {
         setIsSearchingDest(false);
       }
-    }, 250);
+    }, 200);
   };
 
   const calculateRoute = async (origin: { lat: number, lng: number }, dest: { lat: number, lng: number }) => {
@@ -667,7 +596,9 @@ export default function MapComponent() {
       const data = await res.json();
 
       if (!data.success || !data.routes || data.routes.length === 0) {
-        setRouteError(data.error || 'Unable to calculate route. Please try again.');
+        const errorMsg = data.error || 'Unable to calculate route. Please try again.';
+        setRouteError(errorMsg);
+        toast.error(errorMsg);
         return;
       }
 
@@ -676,6 +607,7 @@ export default function MapComponent() {
       setCurrentStepIndex(0);
       setOffRoute(false);
       setRouteError(null);
+      toast.success('Route found!');
 
       if (mapRef.current && !isNavigating) {
         const coords = data.routes[0].Geometry.LineString;
@@ -688,7 +620,9 @@ export default function MapComponent() {
         );
       }
     } catch (err) {
-      setRouteError('Unable to calculate route right now. Please try again.');
+      const errorMsg = 'Unable to calculate route right now. Please try again.';
+      setRouteError(errorMsg);
+      toast.error(errorMsg);
     } finally {
       setIsCalculating(false);
     }
@@ -697,31 +631,111 @@ export default function MapComponent() {
   const handleRouteSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsCalculating(true);
+    setRouteError(null);
+
     let targetStart = originPoint || latestLocationRef.current;
     
-    if (!originPoint && originResults.length > 0) {
-      const loc = await resolveCoordinates(originResults[0]);
-      if (loc) {
-        targetStart = loc;
-        setOriginPoint(targetStart);
-        setOriginQuery(originResults[0].label.split(',')[0].trim());
-        setOriginResults([]);
+    // 1. Resolve origin if needed
+    if (!targetStart) {
+      if (originPoint) {
+        targetStart = originPoint;
+      } else if (latestLocationRef.current) {
+        targetStart = latestLocationRef.current;
+      } else if (originQuery.trim() && originQuery !== 'Your location') {
+        if (originResults.length > 0) {
+          const loc = await resolveCoordinates(originResults[0]);
+          if (loc) {
+            targetStart = loc;
+            setOriginPoint(targetStart);
+            setOriginQuery(originResults[0].label.split(',')[0].trim());
+            setOriginResults([]);
+          }
+        } else {
+          try {
+            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'}/api/v1/search`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ query: originQuery.trim() })
+            });
+            const data = await res.json();
+            if (data.success && data.results && data.results.length > 0) {
+              const loc = await resolveCoordinates(data.results[0]);
+              if (loc) {
+                targetStart = loc;
+                setOriginPoint(targetStart);
+                setOriginQuery(data.results[0].label.split(',')[0].trim());
+              }
+            }
+          } catch (err) {
+            console.error('Failed to geocode origin:', err);
+          }
+        }
+      } else {
+        // "Your location" or empty — try browser geolocation or map center
+        if (navigator.geolocation) {
+          try {
+            const pos = await new Promise<GeolocationPosition>((resolve, reject) => {
+              navigator.geolocation.getCurrentPosition(resolve, reject, { timeout: 4000, enableHighAccuracy: true });
+            });
+            targetStart = { lat: pos.coords.latitude, lng: pos.coords.longitude };
+            latestLocationRef.current = targetStart;
+            setOriginPoint(targetStart);
+          } catch {
+            const center = mapRef.current?.getMap()?.getCenter();
+            if (center) {
+              targetStart = { lat: center.lat, lng: center.lng };
+              setOriginPoint(targetStart);
+            }
+          }
+        } else {
+          const center = mapRef.current?.getMap()?.getCenter();
+          if (center) {
+            targetStart = { lat: center.lat, lng: center.lng };
+            setOriginPoint(targetStart);
+          }
+        }
       }
     }
 
+    // 2. Resolve destination if needed
     let targetDest = destination;
-    if (!targetDest && destResults.length > 0) {
-      const loc = await resolveCoordinates(destResults[0]);
-      if (loc) {
-        targetDest = loc;
-        setDestination(targetDest);
-        setDestQuery(destResults[0].label.split(',')[0].trim());
-        setDestResults([]);
+    if (!targetDest && destQuery.trim()) {
+      if (destResults.length > 0) {
+        const loc = await resolveCoordinates(destResults[0]);
+        if (loc) {
+          targetDest = loc;
+          setDestination(targetDest);
+          setDestQuery(destResults[0].label.split(',')[0].trim());
+          setDestResults([]);
+        }
+      } else {
+        try {
+          const center = mapRef.current?.getMap()?.getCenter();
+          const biasPosition = center ? [center.lng, center.lat] : (targetStart ? [targetStart.lng, targetStart.lat] : undefined);
+          const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'}/api/v1/search`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ query: destQuery.trim(), biasPosition })
+          });
+          const data = await res.json();
+          if (data.success && data.results && data.results.length > 0) {
+            const loc = await resolveCoordinates(data.results[0]);
+            if (loc) {
+              targetDest = loc;
+              setDestination(targetDest);
+              setDestQuery(data.results[0].label.split(',')[0].trim());
+            }
+          }
+        } catch (err) {
+          console.error('Failed to geocode destination:', err);
+        }
       }
     }
 
     if (!targetStart || !targetDest) {
-      setRouteError("Please select both origin and destination.");
+      const msg = !targetStart ? 'Please specify a starting point or allow location access.' : 'Please select or enter a valid destination.';
+      setRouteError(msg);
+      toast.error(msg);
       setIsCalculating(false);
       return;
     }
@@ -938,23 +952,20 @@ const incidentFeature = e.features && e.features.find((f: any) => f.layer.id ===
 
   const resolveCoordinates = async (res: SearchResult): Promise<{ lat: number, lng: number } | null> => {
     if (res.point) return { lat: res.point[1], lng: res.point[0] };
-    if (!res.placeId) return null;
     
-    const apiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
-    if (apiKey) {
-      try {
-        const gRes = await fetch(`https://places.googleapis.com/v1/places/${res.placeId}?fields=location`, {
-          headers: { 'X-Goog-Api-Key': apiKey }
-        });
-        if (gRes.ok) {
-          const data = await gRes.json();
-          if (data.location) {
-            return { lat: data.location.latitude, lng: data.location.longitude };
-          }
-        }
-      } catch (err) {
-        console.error("Google Place Details failed:", err);
+    // Resolve coordinates via backend search
+    try {
+      const resp = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'}/api/v1/search`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ query: res.label })
+      });
+      const d = await resp.json();
+      if (d.success && d.results && d.results[0]?.point) {
+        return { lat: d.results[0].point[1], lng: d.results[0].point[0] };
       }
+    } catch (err) {
+      console.error("Coordinate resolution failed:", err);
     }
     return null;
   };
