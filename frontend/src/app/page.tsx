@@ -12,7 +12,7 @@ export default function Home() {
         </p>
         
         <div className="flex gap-4 pt-4">
-          <Link href="/dashboard">
+          <Link href="/map">
             <button className="bg-secondary hover:bg-secondary-hover text-white px-8 py-3 rounded-full text-lg font-semibold shadow-lg transition hover:scale-105">
               Explore Map
             </button>
