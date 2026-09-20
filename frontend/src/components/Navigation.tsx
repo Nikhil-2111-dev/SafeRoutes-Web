@@ -3,12 +3,16 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import { signOut } from 'aws-amplify/auth';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import SOSModal from '@/components/SOSModal';
+import { Menu, X, Home, Map as MapIcon, AlertTriangle, MessageSquare, AlertCircle, Route, Bell, Users, User, Settings } from 'lucide-react';
 
 export default function Navigation() {
   const pathname = usePathname();
   const { user, isLoading } = useAuth();
   const [dropdownOpen, setDropdownOpen] = useState(false);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [isSOSOpen, setIsSOSOpen] = useState(false);
 
   const isActive = (path: string) => pathname === path;
 
@@ -21,92 +25,172 @@ export default function Navigation() {
     }
   };
 
+  // Close sidebar on escape key
+  useEffect(() => {
+    const handleEscape = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setSidebarOpen(false);
+    };
+    window.addEventListener('keydown', handleEscape);
+    return () => window.removeEventListener('keydown', handleEscape);
+  }, []);
+
+  // Prevent scrolling when mobile sidebar is open
+  useEffect(() => {
+    if (sidebarOpen) {
+      document.body.style.overflow = 'hidden';
+      document.body.classList.add('sidebar-open');
+    } else {
+      document.body.style.overflow = '';
+      document.body.classList.remove('sidebar-open');
+    }
+  }, [sidebarOpen]);
+
   return (
-    <nav className="sticky top-0 z-50 w-full bg-primary/95 backdrop-blur-md border-b border-white/10 shadow-lg">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between items-center h-20">
-          
-          {/* Logo Section */}
-          <Link href="/" className="flex items-center gap-3 group">
-            <div className="bg-secondary p-2 rounded-xl group-hover:bg-secondary-hover transition-colors shadow-[0_0_10px_rgba(13,148,136,0.5)]">
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-7 w-7 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
-              </svg>
+    <>
+      <nav className="sticky top-0 z-[60] w-full bg-black/95 backdrop-blur-md border-b border-white/10">
+        <div className="px-4 sm:px-6 lg:px-8">
+          <div className="flex justify-between items-center h-16">
+            
+            {/* Left Section: Hamburger & Logo */}
+            <div className="flex items-center gap-4">
+              <button 
+                onClick={() => setSidebarOpen(true)}
+                className="text-white hover:bg-white/10 p-2 rounded-md transition-colors"
+                aria-label="Open sidebar"
+              >
+                <Menu className="w-6 h-6" />
+              </button>
+
+              <Link href="/" className="flex items-center gap-2 group">
+                <span className="text-xl font-bold text-white tracking-tight">Safe<span className="text-gray-400">Route</span></span>
+              </Link>
             </div>
-            <span className="text-2xl font-black text-white tracking-tight">Safe<span className="text-secondary">Route</span></span>
+
+            {/* Center Links (Optional on Desktop) */}
+            <div className="hidden md:flex items-center space-x-8 absolute left-1/2 -translate-x-1/2">
+              <Link 
+                href="/" 
+                className={`text-sm font-medium transition-colors ${isActive('/') ? 'text-white' : 'text-gray-400 hover:text-white'}`}
+              >
+                Home
+              </Link>
+              <Link 
+                href="/map" 
+                className={`text-sm font-medium transition-colors ${isActive('/map') ? 'text-white' : 'text-gray-400 hover:text-white'}`}
+              >
+                Map
+              </Link>
+            </div>
+
+            {/* Right Actions */}
+            <div className="flex items-center gap-4">
+              {!isLoading && !user && (
+                <>
+                  <Link 
+                    href="/login" 
+                    className="hidden sm:block text-sm font-medium text-gray-300 hover:text-white transition-colors"
+                  >
+                    Log in
+                  </Link>
+                  <Link 
+                    href="/register" 
+                    className="bg-white hover:bg-gray-200 text-black px-5 py-2 rounded-full text-sm font-bold transition-transform hover:scale-105"
+                  >
+                    Sign Up
+                  </Link>
+                </>
+              )}
+
+              {!isLoading && user && (
+                <div className="relative mr-2 md:mr-4">
+                  <button 
+                    onClick={() => setDropdownOpen(!dropdownOpen)}
+                    className="flex items-center justify-center h-9 w-9 rounded-full bg-white/10 hover:bg-white/20 border border-white/20 transition-colors font-bold text-sm text-white overflow-hidden" title="Profile"
+                  >
+                    {(user.profile?.picture || user.profile?.pictureUrl) ? (
+                      <img src={user.profile.picture || user.profile.pictureUrl} alt="Profile" className="w-full h-full object-cover" />
+                    ) : user.profile?.name ? (
+                      user.profile.name.charAt(0).toUpperCase()
+                    ) : (
+                      <User className="h-5 w-5 text-white" />
+                    )}
+                  </button>
+                  
+                  {dropdownOpen && (
+                    <div className="absolute right-0 mt-2 w-48 bg-[#121212] rounded-xl shadow-2xl py-2 border border-white/10">
+                      <Link href="/profile" className="block px-4 py-2 text-sm text-gray-300 hover:bg-white/5 hover:text-white" onClick={() => setDropdownOpen(false)}>
+                        Profile
+                      </Link>
+                      <button 
+                        onClick={() => { setDropdownOpen(false); handleSignOut(); }}
+                        className="block w-full text-left px-4 py-2 text-sm text-red-500 hover:bg-red-500/10 mt-1 border-t border-white/5 pt-3"
+                      >
+                        Logout
+                      </button>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+            
+          </div>
+        </div>
+      </nav>
+
+      {/* Sidebar Overlay (Removed to keep map visible) */}
+
+      {/* Sidebar Drawer */}
+      <div 
+        className={`fixed top-0 left-0 h-full w-72 bg-[#0a0a0a] border-r border-white/10 z-[80] transform transition-transform duration-200 ease-in-out flex flex-col ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}`}
+      >
+        <div className="p-4 flex items-center justify-between border-b border-white/10 h-16">
+          <span className="text-xl font-bold text-white tracking-tight">Safe<span className="text-gray-400">Route</span></span>
+          <button 
+            onClick={() => setSidebarOpen(false)}
+            className="text-gray-400 hover:text-white hover:bg-white/10 p-2 rounded-md transition-colors"
+          >
+            <X className="w-5 h-5" />
+          </button>
+        </div>
+
+        <div className="flex-1 overflow-y-auto py-4 flex flex-col gap-1 px-3">
+          <Link href="/" className={`flex items-center gap-3 px-3 py-3 rounded-lg transition-colors ${isActive('/') ? 'bg-white/10 text-white' : 'text-gray-400 hover:bg-white/5 hover:text-white'}`} onClick={() => setSidebarOpen(false)} prefetch={true}>
+            <Home className="w-5 h-5" /> <span className="font-medium">Home</span>
+          </Link>
+          <Link href="/map" className={`flex items-center gap-3 px-3 py-3 rounded-lg transition-colors ${isActive('/map') ? 'bg-white/10 text-white' : 'text-gray-400 hover:bg-white/5 hover:text-white'}`} onClick={() => setSidebarOpen(false)} prefetch={true}>
+            <MapIcon className="w-5 h-5" /> <span className="font-medium">Map</span>
           </Link>
 
-          {/* Center Links */}
-          <div className="hidden md:flex space-x-8">
-            <Link 
-              href="/map" 
-              className={`text-sm font-semibold transition-colors ${isActive('/map') ? 'text-secondary' : 'text-slate-300 hover:text-white'}`}
-            >
-              Map
-            </Link>
-            <Link 
-              href="/report" 
-              className={`text-sm font-semibold transition-colors ${isActive('/report') ? 'text-secondary' : 'text-slate-300 hover:text-white'}`}
-            >
-              Report Incident
-            </Link>
-          </div>
+          <div className="h-px bg-white/10 my-4 mx-3" />
 
-          {/* Right Actions */}
-          <div className="flex items-center gap-4">
-            {!isLoading && !user && (
-              <>
-                <Link 
-                  href="/login" 
-                  className="hidden sm:block text-sm font-semibold text-slate-300 hover:text-white transition-colors"
-                >
-                  Log in
-                </Link>
-                <Link 
-                  href="/register" 
-                  className="bg-secondary hover:bg-secondary-hover text-white px-6 py-2.5 rounded-full text-sm font-bold shadow-[0_0_15px_rgba(13,148,136,0.4)] transition-transform hover:scale-105"
-                >
-                  Get Started
-                </Link>
-              </>
-            )}
-
-            {!isLoading && user && (
-              <div className="relative">
-                <button 
-                  onClick={() => setDropdownOpen(!dropdownOpen)}
-                  className="flex items-center justify-center h-10 w-10 rounded-full bg-slate-700/50 hover:bg-slate-600 border border-slate-600 transition-colors" title="Profile"
-                >
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-slate-200" viewBox="0 0 20 20" fill="currentColor">
-                    <path fillRule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clipRule="evenodd" />
-                  </svg>
-                </button>
-                
-                {dropdownOpen && (
-                  <div className="absolute right-0 mt-2 w-48 bg-white dark:bg-slate-800 rounded-xl shadow-xl py-2 border border-slate-200 dark:border-slate-700">
-                    <Link href="/profile" className="block px-4 py-2 text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700" onClick={() => setDropdownOpen(false)}>
-                      Profile
-                    </Link>
-                    <Link href="/map" className="block px-4 py-2 text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700" onClick={() => setDropdownOpen(false)}>
-                      Map
-                    </Link>
-                    <Link href="/profile" className="block px-4 py-2 text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700" onClick={() => setDropdownOpen(false)}>
-                      Settings
-                    </Link>
-                    <button 
-                      onClick={() => { setDropdownOpen(false); handleSignOut(); }}
-                      className="block w-full text-left px-4 py-2 text-sm text-danger hover:bg-danger/10"
-                    >
-                      Logout
-                    </button>
-                  </div>
-                )}
-              </div>
-            )}
-          </div>
+          {/* Primary Actions */}
+          <button 
+            onClick={() => { setSidebarOpen(false); setIsSOSOpen(true); }}
+            className="flex items-center gap-3 px-3 py-3 rounded-lg transition-colors text-red-500 hover:bg-red-500/10 font-bold"
+          >
+            <AlertTriangle className="w-5 h-5" /> <span>Emergency SOS</span>
+          </button>
           
+          <Link href="/dashboard" className="flex items-center gap-3 px-3 py-3 rounded-lg transition-colors text-gray-400 hover:bg-white/5 hover:text-white" onClick={() => setSidebarOpen(false)} prefetch={true}>
+            <MessageSquare className="w-5 h-5" /> <span className="font-medium">Community Feed</span>
+          </Link>
+          <Link href="/report" className="flex items-center gap-3 px-3 py-3 rounded-lg transition-colors text-gray-400 hover:bg-white/5 hover:text-white" onClick={() => setSidebarOpen(false)} prefetch={true}>
+            <AlertCircle className="w-5 h-5" /> <span className="font-medium">Report Incident</span>
+          </Link>
+
+          <div className="h-px bg-white/10 my-4 mx-3" />
+
+          {/* Secondary Actions */}
+          <Link href="/contacts" className="flex items-center gap-3 px-3 py-3 rounded-lg transition-colors text-gray-400 hover:bg-white/5 hover:text-white" onClick={() => setSidebarOpen(false)} prefetch={true}>
+            <Users className="w-5 h-5" /> <span className="font-medium">Contacts</span>
+          </Link>
+          <Link href="/profile" className="flex items-center gap-3 px-3 py-3 rounded-lg transition-colors text-gray-400 hover:bg-white/5 hover:text-white" onClick={() => setSidebarOpen(false)} prefetch={true}>
+            <User className="w-5 h-5" /> <span className="font-medium">Profile</span>
+          </Link>
         </div>
       </div>
-    </nav>
+
+      <SOSModal isOpen={isSOSOpen} onClose={() => setIsSOSOpen(false)} />
+    </>
   );
 }

@@ -57,6 +57,15 @@ export class InfrastructureStack extends cdk.Stack {
       billingMode: dynamodb.BillingMode.PAY_PER_REQUEST,
       removalPolicy: cdk.RemovalPolicy.DESTROY,
     });
+    
+    // New Table for Hybrid Community Safety System
+    const incidentsTable = new dynamodb.Table(this, 'SafeRouteIncidents', {
+      tableName: 'SafeRouteIncidents',
+      partitionKey: { name: 'incidentId', type: dynamodb.AttributeType.STRING },
+      billingMode: dynamodb.BillingMode.PAY_PER_REQUEST,
+      removalPolicy: cdk.RemovalPolicy.DESTROY,
+    });
+
     const alertsTable = new dynamodb.Table(this, 'SafeRouteAlerts', {
       tableName: 'SafeRouteAlerts',
       partitionKey: { name: 'alertId', type: dynamodb.AttributeType.STRING },
@@ -71,6 +80,14 @@ export class InfrastructureStack extends cdk.Stack {
     });
 
 
+
+    const contactsTable = new dynamodb.Table(this, 'SafeRouteContacts', {
+      tableName: 'SafeRouteContacts',
+      partitionKey: { name: 'PK', type: dynamodb.AttributeType.STRING },
+      sortKey: { name: 'SK', type: dynamodb.AttributeType.STRING },
+      billingMode: dynamodb.BillingMode.PAY_PER_REQUEST,
+      removalPolicy: cdk.RemovalPolicy.DESTROY,
+    });
 
     const processGeofenceEnter = new lambda.Function(this, 'ProcessGeofenceEnterLambda', {
       runtime: lambda.Runtime.NODEJS_22_X,

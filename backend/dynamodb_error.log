@@ -1,0 +1,5 @@
+{
+  "name": "CredentialsProviderError",
+  "message": "Your session has expired. Please reauthenticate.",
+  "stack": "CredentialsProviderError: Your session has expired. Please reauthenticate.\n    at LoginCredentialsFetcher.refresh (C:\\SafeRoute\\backend\\node_modules\\@aws-sdk\\credential-provider-login\\dist-cjs\\index.js:131:23)\n    at processTicksAndRejections (node:internal/process/task_queues:105:5)\n    at C:\\SafeRoute\\backend\\node_modules\\@aws-sdk\\credential-provider-login\\dist-cjs\\index.js:286:25\n    at resolveLoginCredentials (C:\\SafeRoute\\backend\\node_modules\\@aws-sdk\\credential-provider-ini\\dist-cjs\\index.js:115:25)\n    at C:\\SafeRoute\\backend\\node_modules\\@aws-sdk\\credential-provider-node\\dist-cjs\\index.js:82:20\n    at provider (C:\\SafeRoute\\backend\\node_modules\\@aws-sdk\\credential-provider-node\\dist-cjs\\index.js:47:13)\n    at C:\\SafeRoute\\backend\\node_modules\\@smithy\\core\\dist-cjs\\index.js:59:23\n    at C:\\SafeRoute\\backend\\node_modules\\@aws-sdk\\core\\dist-cjs\\submodules\\client\\index.js:125:26\n    at C:\\SafeRoute\\backend\\src\\routes\\users.ts:33:22"
+}
