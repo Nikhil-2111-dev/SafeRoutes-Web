@@ -132,7 +132,7 @@ export default function ReportPage() {
         const base64data = reader.result as string;
         try {
           const token = await getAuthToken();
-          const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'}/api/v1/pins/analyze-image`, {
+          const res = await fetch('/api/v1/pins/analyze-image', {
             method: 'POST',
             headers: { 
               'Content-Type': 'application/json',
@@ -146,6 +146,9 @@ export default function ReportPage() {
 
           if (res.ok) {
             const data = await res.json();
+            if (data.description) {
+              setDescription(data.description);
+            }
             if (data.tags) {
               setTags(prev => {
                 const newTags = [...prev];
@@ -156,9 +159,19 @@ export default function ReportPage() {
                 return newTags.slice(0, 8);
               });
             }
+          } else {
+            console.error("AI Analysis API returned error:", res.status);
+            if (res.status === 401) {
+              setSubmitError("Authentication error: You must be logged in to analyze images.");
+            } else if (res.status === 413) {
+              setSubmitError("Image is too large. Please select a smaller photo.");
+            } else {
+              setSubmitError(`AI Analysis failed (${res.status}). Please try again.`);
+            }
           }
         } catch (err) {
           console.error("AI Analysis failed", err);
+          setSubmitError("AI Analysis failed. Could not reach server.");
         } finally {
           setIsAnalyzing(false);
         }
@@ -277,15 +290,20 @@ export default function ReportPage() {
     setIsSubmitting(true);
 
     try {
-      const res = await fetch('http://localhost:5000/api/v1/pins', {
+      const token = await getAuthToken();
+      const res = await fetch('/api/v1/incidents', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+        },
         body: JSON.stringify({
-          userId: 'test-user-id', // Would come from Auth in production
-          type,
+          category: type,
           description,
           latitude: latNum,
           longitude: lngNum,
+          severity: 3,
+          tags: tags
         }),
       });
 
@@ -693,8 +711,20 @@ export default function ReportPage() {
                     <img
                       src={selectedImage}
                       alt="Incident preview"
-                      className="w-full h-36 sm:h-44 object-cover"
+                      className={`w-full h-36 sm:h-44 object-cover transition-all duration-300 ${isAnalyzing ? 'opacity-40 blur-sm grayscale-[50%]' : 'opacity-100'}`}
                     />
+                    
+                    {isAnalyzing && (
+                      <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/40 backdrop-blur-sm z-10">
+                        <div className="relative flex items-center justify-center mb-3">
+                          <div className="w-10 h-10 border border-teal-500/30 rounded-full animate-ping absolute"></div>
+                          <div className="w-8 h-8 border-2 border-teal-500/20 border-t-teal-400 border-r-teal-400 rounded-full animate-spin shadow-[0_0_15px_rgba(0,223,192,0.4)]"></div>
+                        </div>
+                        <div className="text-[10px] sm:text-xs font-mono font-bold tracking-[0.2em] text-teal-300 animate-pulse uppercase drop-shadow-[0_0_8px_rgba(0,223,192,0.8)]">
+                          AI Scanning...
+                        </div>
+                      </div>
+                    )}
                   </div>
                 </div>
               )}

@@ -39,7 +39,7 @@ router.get('/', async (req, res) => {
 
 // POST a new incident (Authenticated)
 router.post('/', requireAuth, async (req, res) => {
-  const { category, description, latitude, longitude, severity } = req.body;
+  const { category, description, latitude, longitude, severity, tags } = req.body;
 
   if (!category || !latitude || !longitude) {
     return res.status(400).json({ error: 'Missing required fields' });
@@ -54,6 +54,7 @@ router.post('/', requireAuth, async (req, res) => {
     latitude,
     longitude,
     severity: severity || 3, 
+    tags: Array.isArray(tags) ? tags : [],
     status: 'active',
     reportedAt: now,
     lastUpdatedAt: now,

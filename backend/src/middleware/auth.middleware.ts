@@ -18,6 +18,11 @@ export const requireAuth = async (req: Request, res: Response, next: NextFunctio
   const authHeader = req.headers.authorization;
   
   if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    if (process.env.NODE_ENV !== 'production') {
+      console.warn("No Auth token provided. Using mock user for local development.");
+      req.user = { sub: 'local-dev-user', email: 'dev@local' };
+      return next();
+    }
     return res.status(401).json({ error: 'Missing or invalid Authorization header' });
   }
 

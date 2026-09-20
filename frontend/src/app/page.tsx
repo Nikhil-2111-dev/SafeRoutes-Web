@@ -236,7 +236,7 @@ export default function Home() {
         <section id="scene-0" className="relative min-h-[calc(100vh-5rem)] flex flex-col justify-between overflow-hidden border-b border-white/[0.06]">
           
           {/* Main Hero Container: Balanced 40/60 Editorial Layout */}
-          <div className="w-full max-w-7xl mx-auto px-6 sm:px-10 lg:px-12 pt-8 sm:pt-12 pb-10 flex-1 flex flex-col lg:flex-row items-center gap-10 lg:gap-12 justify-between">
+          <div className="w-full max-w-[1600px] mx-auto px-6 sm:px-10 lg:px-12 pt-8 sm:pt-12 pb-10 flex-1 flex flex-col lg:flex-row items-center gap-10 lg:gap-12 justify-between">
             
             {/* Left Column (~40% on Desktop): Editorial Copy & Primary Actions */}
             <div className="w-full lg:w-[42%] flex flex-col justify-center z-10">

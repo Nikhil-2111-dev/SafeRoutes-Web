@@ -42,10 +42,13 @@ export class AIService {
         }
       });
 
-      const textResponse = response.text;
+      let textResponse = response.text;
       if (!textResponse) {
         throw new Error("No text response from Gemini");
       }
+
+      // Strip markdown code blocks if present
+      textResponse = textResponse.replace(/^```(json)?\n?/i, '').replace(/```$/i, '').trim();
 
       return JSON.parse(textResponse);
     } catch (error) {
