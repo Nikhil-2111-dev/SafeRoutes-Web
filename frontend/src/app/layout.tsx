@@ -16,6 +16,8 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
+import { Toaster } from 'react-hot-toast';
+
 export const metadata: Metadata = {
   title: "SafeRoute",
   description: "Navigate Your City with Confidence",
@@ -35,6 +37,41 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
             {children}
           </GoogleMapsProvider>
         </AuthProvider>
+        <Toaster 
+          position="bottom-right" 
+          toastOptions={{
+            style: {
+              background: '#050B14',
+              color: '#00F2FE',
+              border: '1px solid rgba(0, 242, 254, 0.2)',
+              boxShadow: '0 0 20px rgba(0, 242, 254, 0.1)',
+              fontFamily: 'monospace',
+              fontSize: '14px',
+              letterSpacing: '1px'
+            },
+            success: {
+              iconTheme: {
+                primary: '#00F2FE',
+                secondary: '#050B14',
+              },
+            },
+            error: {
+              style: {
+                background: '#050B14',
+                color: '#FF2A5F',
+                border: '1px solid rgba(255, 42, 95, 0.3)',
+                boxShadow: '0 0 20px rgba(255, 42, 95, 0.15)',
+                fontFamily: 'monospace',
+                fontSize: '14px',
+                letterSpacing: '1px'
+              },
+              iconTheme: {
+                primary: '#FF2A5F',
+                secondary: '#050B14',
+              },
+            }
+          }}
+        />
       </body>
     </html>
   );

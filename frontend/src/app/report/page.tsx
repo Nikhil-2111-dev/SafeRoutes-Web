@@ -1,9 +1,11 @@
 'use client';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { fetchAuthSession } from 'aws-amplify/auth';
 
 export default function ReportPage() {
   const [category, setCategory] = useState('General');
+  const [severity, setSeverity] = useState(3);
   const [description, setDescription] = useState('');
   const [latitude, setLatitude] = useState('');
   const [longitude, setLongitude] = useState('');
@@ -26,13 +28,26 @@ export default function ReportPage() {
     setIsSubmitting(true);
     
     try {
-      // POST to the new Incidents endpoint
+      // Get the Cognito JWT session
+      const session = await fetchAuthSession();
+      const token = session.tokens?.idToken?.toString();
+      
+      if (!token) {
+        alert("You must be logged in to report an incident.");
+        setIsSubmitting(false);
+        return;
+      }
+
+      // POST to the new secure Incidents endpoint
       const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'}/api/v1/incidents`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}` 
+        },
         body: JSON.stringify({
-          reportedBy: 'authenticated-user-id', // Would come from AuthContext
           category,
+          severity,
           description,
           latitude: parseFloat(latitude),
           longitude: parseFloat(longitude)
@@ -106,6 +121,19 @@ export default function ReportPage() {
                 onChange={(e) => setLongitude(e.target.value)}
                 required
               />
+            </div>
+            
+            <div className="md:col-span-2">
+              <label className="block text-sm font-medium mb-1 text-white/70">Severity (1 = Minor, 5 = Critical)</label>
+              <div className="flex items-center gap-4">
+                <input 
+                  type="range" min="1" max="5" step="1"
+                  className="w-full h-2 bg-white/10 rounded-lg appearance-none cursor-pointer accent-red-500"
+                  value={severity}
+                  onChange={(e) => setSeverity(parseInt(e.target.value))}
+                />
+                <span className="text-xl font-bold text-red-500 bg-red-500/10 px-4 py-2 rounded-xl border border-red-500/20">{severity}</span>
+              </div>
             </div>
           </div>
 

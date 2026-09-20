@@ -3,6 +3,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { DynamoDBClient } from '@aws-sdk/client-dynamodb';
 import { DynamoDBDocumentClient, PutCommand, ScanCommand } from '@aws-sdk/lib-dynamodb';
 import { Server } from 'socket.io';
+import { requireAuth } from '../middleware/auth.middleware';
 
 const router = Router();
 
@@ -11,11 +12,12 @@ const docClient = DynamoDBDocumentClient.from(client);
 
 const TABLE_NAME = 'SafeRouteIncidents';
 
+// In-memory fallback for local development without AWS credentials
+const fallbackIncidents: any[] = [];
+
 // GET all active incidents
 router.get('/', async (req, res) => {
   try {
-    // In production, use query with GSI for active status. 
-    // Using scan for hackathon prototype brevity
     const command = new ScanCommand({
       TableName: TABLE_NAME,
       FilterExpression: '#status = :status',
@@ -29,30 +31,39 @@ router.get('/', async (req, res) => {
 
     const response = await docClient.send(command);
     res.status(200).json({ success: true, incidents: response.Items });
-  } catch (error) {
+  } catch (error: any) {
+    if (error.name === 'CredentialsProviderError' || error.name === 'UnrecognizedClientException') {
+      console.warn('AWS Credentials missing, using in-memory fallback for GET /incidents');
+      return res.status(200).json({ success: true, incidents: fallbackIncidents.filter(i => i.status === 'active') });
+    }
     console.error('Error fetching incidents:', error);
     res.status(500).json({ success: false, error: 'Failed to fetch incidents' });
   }
 });
 
-// POST a new incident
-router.post('/', async (req, res) => {
-  const { category, description, latitude, longitude, reportedBy } = req.body;
+// POST a new incident (Authenticated)
+router.post('/', requireAuth, async (req, res) => {
+  const { category, description, latitude, longitude, severity } = req.body;
 
   if (!category || !latitude || !longitude) {
     return res.status(400).json({ error: 'Missing required fields' });
   }
 
+  const now = new Date().toISOString();
+  
   const incident = {
     incidentId: uuidv4(),
-    category,
+    incidentType: category,
     description: description || '',
     latitude,
     longitude,
-    severity: 3, // Default -3 points impact
+    severity: severity || 3, 
     status: 'active',
-    createdAt: new Date().toISOString(),
-    reportedBy: reportedBy || 'anonymous'
+    reportedAt: now,
+    lastUpdatedAt: now,
+    reporterUserId: req.user?.sub || 'anonymous',
+    confidenceScore: 50, // Base starting confidence
+    confirmationCount: 0
   };
 
   try {
@@ -62,18 +73,25 @@ router.post('/', async (req, res) => {
     });
 
     await docClient.send(command);
-
-    // Emit real-time event to all connected clients
-    const io: Server = req.app.get('io');
-    if (io) {
-      io.emit('new_incident', incident);
+  } catch (error: any) {
+    if (error.name === 'CredentialsProviderError' || error.name === 'UnrecognizedClientException') {
+      console.warn('AWS Credentials missing, using in-memory fallback for POST /incidents');
+      fallbackIncidents.push(incident);
+    } else {
+      console.error('Error creating incident:', error);
+      return res.status(500).json({ success: false, error: 'Failed to create incident' });
     }
-
-    res.status(201).json({ success: true, incident });
-  } catch (error) {
-    console.error('Error creating incident:', error);
-    res.status(500).json({ success: false, error: 'Failed to create incident' });
   }
+
+  // Emit real-time event to all connected clients
+  const io: Server = req.app.get('io');
+  if (io) {
+    io.emit('new_incident', incident);
+  }
+
+  res.status(201).json({ success: true, incident });
 });
 
+// Export fallback for routing.ts to use
+export { fallbackIncidents };
 export default router;

@@ -72,3 +72,12 @@ body {
 .maplibregl-ctrl-bottom-right .maplibregl-ctrl-group:hover .maplibregl-ctrl-icon {
   filter: brightness(0) invert(1) !important; /* Pure white icon */
 }
+
+/* Hide scrollbars for cleaner UI */
+.hide-scrollbar {
+  -ms-overflow-style: none;  /* IE and Edge */
+  scrollbar-width: none;  /* Firefox */
+}
+.hide-scrollbar::-webkit-scrollbar {
+  display: none; /* Chrome, Safari and Opera */
+}

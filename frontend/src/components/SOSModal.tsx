@@ -1,5 +1,8 @@
 'use client';
 import { useState, useEffect } from 'react';
+import { fetchAuthSession } from 'aws-amplify/auth';
+import { CheckCircle, XCircle } from 'lucide-react';
+import toast from 'react-hot-toast';
 
 interface SOSModalProps {
   isOpen: boolean;
@@ -9,31 +12,88 @@ interface SOSModalProps {
 export default function SOSModal({ isOpen, onClose }: SOSModalProps) {
   const [countdown, setCountdown] = useState(5);
   const [isAlerting, setIsAlerting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     let timer: NodeJS.Timeout;
     if (isOpen && !isAlerting && countdown > 0) {
       timer = setTimeout(() => setCountdown(countdown - 1), 1000);
     } else if (isOpen && countdown === 0 && !isAlerting) {
-      setIsAlerting(true);
-      // Automatically trigger SOS logic here
       triggerSOS();
     }
     return () => clearTimeout(timer);
   }, [isOpen, countdown, isAlerting]);
 
-  // Reset state when opened/closed
   useEffect(() => {
     if (isOpen) {
       setCountdown(5);
       setIsAlerting(false);
+      setError(null);
     }
   }, [isOpen]);
 
-  const triggerSOS = () => {
+  const triggerSOS = async () => {
     setIsAlerting(true);
-    // TODO: Send SOS to backend which triggers SMS/Push notifications via AWS SNS/Pinpoint
-    console.log("SOS Alert Triggered!");
+    setError(null);
+    
+    if (!('geolocation' in navigator)) {
+      setError("Geolocation is not supported by your browser");
+      return;
+    }
+
+    navigator.geolocation.getCurrentPosition(
+      async (position) => {
+        try {
+          const session = await fetchAuthSession();
+          const token = session.tokens?.idToken?.toString();
+          if (!token) throw new Error("Not authenticated");
+
+          const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'}/api/v1/sos`, {
+            method: 'POST',
+            headers: {
+              'Authorization': `Bearer ${token}`,
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+              latitude: position.coords.latitude,
+              longitude: position.coords.longitude
+            })
+          });
+
+          const data = await res.json();
+          if (!res.ok) {
+            throw new Error(data.details ? `${data.error}: ${data.details}` : (data.error || 'Failed to trigger SOS'));
+          }
+
+          // Open Native SMS App reliably using an anchor click
+          if (data.contacts && data.contacts.length > 0) {
+            const phoneNumbers = data.contacts.map((c: any) => c.phone).join(',');
+            // iOS uses &body= while Android usually uses ?body= but most modern browsers handle ?body= fine
+            const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+            const bodyParam = isIOS ? '&body=' : '?body=';
+            const smsLink = `sms:${phoneNumbers}${bodyParam}${encodeURIComponent(data.smsBody)}`;
+            
+            // Create hidden link and click it
+            const a = document.createElement('a');
+            a.href = smsLink;
+            a.target = '_top';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+          }
+
+          toast.success('Emergency SMS app opened successfully!');
+          onClose(); // Close the modal
+        } catch (err: any) {
+          setError(err.message);
+          toast.error(`SOS Failed: ${err.message}`);
+        }
+      },
+      (err) => {
+        setError(`Failed to get location: ${err.message}`);
+      },
+      { enableHighAccuracy: true }
+    );
   };
 
   if (!isOpen) return null;
@@ -51,7 +111,7 @@ export default function SOSModal({ isOpen, onClose }: SOSModalProps) {
         <div className="p-8 text-center">
           {!isAlerting ? (
             <>
-              <p className="text-xl mb-6 font-medium">Alerting trusted contacts and authorities in:</p>
+              <p className="text-xl mb-6 font-medium">Alerting trusted contacts in:</p>
               <div className="text-6xl font-black text-danger mb-8">{countdown}</div>
               
               <div className="flex gap-4">
@@ -71,20 +131,27 @@ export default function SOSModal({ isOpen, onClose }: SOSModalProps) {
             </>
           ) : (
             <>
-              <div className="text-safe mb-4">
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-20 w-20 mx-auto" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-              </div>
-              <h3 className="text-2xl font-bold mb-2 text-safe">Alert Sent!</h3>
-              <p className="opacity-80 mb-8">Your live location has been shared with your trusted contacts and local emergency services.</p>
-              
-              <button 
-                onClick={onClose}
-                className="w-full py-3 px-4 rounded-lg font-bold border-2 border-slate-300 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 transition"
-              >
-                Close Window
-              </button>
+              {error ? (
+                <>
+                  <div className="text-danger mb-4">
+                    <XCircle className="h-20 w-20 mx-auto" />
+                  </div>
+                  <h3 className="text-2xl font-bold mb-2 text-danger">SOS Failed</h3>
+                  <p className="opacity-80 mb-8">{error}</p>
+                  
+                  <button 
+                    onClick={onClose}
+                    className="w-full py-3 px-4 rounded-lg font-bold border-2 border-slate-300 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 transition"
+                  >
+                    Close Window
+                  </button>
+                </>
+              ) : (
+                <>
+                  <div className="animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-danger mx-auto mb-6"></div>
+                  <p className="text-lg font-medium">Acquiring live location and preparing SMS...</p>
+                </>
+              )}
             </>
           )}
         </div>

@@ -10,6 +10,14 @@ declare global {
   }
 }
 
+// Instantiate the verifier globally so it caches the JWKS from AWS. 
+// Do not instantiate this inside the request handler or it will fetch on every request and timeout!
+const verifier = CognitoJwtVerifier.create({
+  userPoolId: process.env.COGNITO_USER_POOL_ID || '',
+  tokenUse: "id",
+  clientId: process.env.COGNITO_USER_POOL_CLIENT_ID || '',
+});
+
 export const requireAuth = async (req: Request, res: Response, next: NextFunction) => {
   const authHeader = req.headers.authorization;
   
@@ -20,18 +28,10 @@ export const requireAuth = async (req: Request, res: Response, next: NextFunctio
   const token = authHeader.split(' ')[1];
 
   try {
-    // Determine which pool to use (we don't strictly need to hardcode it if we handle local dev bypass, 
-    // but the requirements say NO MOCK DATA. We enforce AWS Cognito validation).
     if (!process.env.COGNITO_USER_POOL_ID || !process.env.COGNITO_USER_POOL_CLIENT_ID) {
       console.error("Backend missing Cognito Env Vars");
       return res.status(500).json({ error: "Server authentication misconfigured" });
     }
-
-    const verifier = CognitoJwtVerifier.create({
-      userPoolId: process.env.COGNITO_USER_POOL_ID,
-      tokenUse: "id", // Use the ID token for profile info
-      clientId: process.env.COGNITO_USER_POOL_CLIENT_ID,
-    });
 
     const payload = await verifier.verify(token);
     

@@ -7,7 +7,7 @@ const trackerService = new TrackerService();
 const geofenceService = new GeofenceService();
 
 router.post('/', async (req, res) => {
-  const { deviceId = 'anonymous-device', latitude, longitude } = req.body;
+  const { deviceId = 'anonymous-device', latitude, longitude, accuracy, speed, heading, sampleTime } = req.body;
 
   if (!latitude || !longitude) {
     return res.status(400).json({ error: 'Latitude and longitude are required' });
@@ -15,7 +15,7 @@ router.post('/', async (req, res) => {
 
   try {
     // 1. Update position in AWS Location Tracker
-    await trackerService.updatePosition(deviceId, latitude, longitude);
+    await trackerService.updatePosition(deviceId, latitude, longitude, accuracy, speed, heading, sampleTime);
 
     // 2. Evaluate if user entered any danger zones (Geofences)
     await geofenceService.evaluatePosition(deviceId, latitude, longitude);

@@ -40,13 +40,63 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       if (res.ok) {
         const profile = await res.json();
         setUser({ ...currentUser, profile });
+      } else if (res.status === 404) {
+        // Profile not found, let's create/sync it
+        const createRes = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'}/api/v1/users/profile`, {
+          method: 'POST',
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        
+        if (createRes.ok) {
+          const data = await createRes.json();
+          setUser({ ...currentUser, profile: data.profile });
+        } else {
+          setUser(currentUser);
+        }
       } else {
-        // If 404 (not created yet), just set the base user
-        setUser(currentUser);
+        // Fallback: If backend/DynamoDB is unreachable, pull real details dynamically from Cognito
+        try {
+          const { fetchUserAttributes } = await import('aws-amplify/auth');
+          const attributes = await fetchUserAttributes();
+          setUser({
+            ...currentUser,
+            profile: {
+              name: attributes.name || attributes.email,
+              email: attributes.email,
+              phone_number: attributes.phone_number,
+              birthdate: attributes.birthdate,
+              gender: attributes.gender,
+              address: attributes.address,
+              picture: attributes.picture,
+              createdAt: new Date().toISOString()
+            }
+          });
+        } catch (e) {
+          setUser(currentUser);
+        }
       }
     } catch (err) {
       console.error("Failed to fetch backend profile:", err);
-      setUser(currentUser); // fallback to just Cognito user
+      // Fallback to Cognito attributes
+      try {
+        const { fetchUserAttributes } = await import('aws-amplify/auth');
+        const attributes = await fetchUserAttributes();
+        setUser({
+          ...currentUser,
+          profile: {
+            name: attributes.name || attributes.email,
+            email: attributes.email,
+            phone_number: attributes.phone_number,
+            birthdate: attributes.birthdate,
+            gender: attributes.gender,
+            address: attributes.address,
+            picture: attributes.picture,
+            createdAt: new Date().toISOString()
+          }
+        });
+      } catch (e) {
+        setUser(currentUser);
+      }
     }
   };
 
@@ -56,7 +106,11 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       const currentUser = await getCurrentUser();
       
       // 2. Instantly set the user in React state to bypass ProtectedRoutes and allow instant UI transition
-      setUser(currentUser as SafeRouteUser);
+      // Preserve the existing profile if it exists to prevent UI flashing
+      setUser((prevUser) => ({
+        ...currentUser,
+        profile: prevUser?.profile
+      }));
       setIsLoading(false);
       
       // 3. Fetch the heavy DynamoDB backend profile in the background without blocking the user

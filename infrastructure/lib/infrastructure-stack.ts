@@ -81,6 +81,14 @@ export class InfrastructureStack extends cdk.Stack {
 
 
 
+    const contactsTable = new dynamodb.Table(this, 'SafeRouteContacts', {
+      tableName: 'SafeRouteContacts',
+      partitionKey: { name: 'PK', type: dynamodb.AttributeType.STRING },
+      sortKey: { name: 'SK', type: dynamodb.AttributeType.STRING },
+      billingMode: dynamodb.BillingMode.PAY_PER_REQUEST,
+      removalPolicy: cdk.RemovalPolicy.DESTROY,
+    });
+
     const processGeofenceEnter = new lambda.Function(this, 'ProcessGeofenceEnterLambda', {
       runtime: lambda.Runtime.NODEJS_22_X,
       handler: 'index.handler',
