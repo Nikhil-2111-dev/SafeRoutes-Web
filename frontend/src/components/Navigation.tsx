@@ -5,7 +5,7 @@ import { useAuth } from '@/context/AuthContext';
 import { signOut } from 'aws-amplify/auth';
 import { useState, useEffect } from 'react';
 import SOSModal from '@/components/SOSModal';
-import { Menu, X, Home, Map as MapIcon, AlertTriangle, MessageSquare, AlertCircle, Route, Bell, Users, User, Settings } from 'lucide-react';
+import { Menu, X, Home, Map as MapIcon, AlertTriangle, MessageSquare, AlertCircle, Route, Bell, Users, User, Settings, LogOut } from 'lucide-react';
 
 export default function Navigation() {
   const pathname = usePathname();
@@ -66,8 +66,8 @@ export default function Navigation() {
               </Link>
             </div>
 
-            {/* Center Links (Optional on Desktop) */}
-            <div className="hidden md:flex items-center space-x-8 absolute left-1/2 -translate-x-1/2">
+            {/* Center Links */}
+            <div className="flex items-center space-x-4 sm:space-x-8 absolute left-1/2 -translate-x-1/2">
               <Link 
                 href="/" 
                 className={`text-sm font-medium transition-colors ${isActive('/') ? 'text-white' : 'text-gray-400 hover:text-white'}`}
@@ -92,11 +92,12 @@ export default function Navigation() {
                   >
                     Log in
                   </Link>
-                  <Link 
-                    href="/register" 
-                    className="bg-white hover:bg-gray-200 text-black px-5 py-2 rounded-full text-sm font-bold transition-transform hover:scale-105"
-                  >
-                    Sign Up
+                  <Link href="/login">
+                    <button 
+                      className="bg-[#00dfc0] hover:bg-[#00c9ad] text-slate-950 px-5 py-2 rounded-full text-sm font-bold shadow-[0_0_15px_rgba(0,223,192,0.3)] transition-transform hover:scale-105"
+                    >
+                      Login
+                    </button>
                   </Link>
                 </>
               )}
@@ -187,6 +188,15 @@ export default function Navigation() {
           <Link href="/profile" className="flex items-center gap-3 px-3 py-3 rounded-lg transition-colors text-gray-400 hover:bg-white/5 hover:text-white" onClick={() => setSidebarOpen(false)} prefetch={true}>
             <User className="w-5 h-5" /> <span className="font-medium">Profile</span>
           </Link>
+          
+          {user && (
+            <button 
+              onClick={() => { setSidebarOpen(false); handleSignOut(); }}
+              className="flex items-center gap-3 px-3 py-3 rounded-lg transition-colors text-red-500 hover:bg-red-500/10 w-full text-left font-medium mt-auto"
+            >
+              <LogOut className="w-5 h-5" /> <span>Logout</span>
+            </button>
+          )}
         </div>
       </div>
 

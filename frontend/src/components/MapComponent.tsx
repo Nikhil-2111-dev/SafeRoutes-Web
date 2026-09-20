@@ -1,11 +1,9 @@
 'use client';
 import { useState, useEffect, useCallback, useRef, useMemo, memo } from 'react';
-import Map, { Marker, Popup, Source, Layer, LayerProps, NavigationControl, MapRef } from 'react-map-gl/maplibre';
-import { fetchAuthSession } from 'aws-amplify/auth';
+import Map, { Marker, Popup, Source, Layer, NavigationControl, MapRef } from 'react-map-gl/maplibre';
 import 'maplibre-gl/dist/maplibre-gl.css';
 import { io, Socket } from 'socket.io-client';
-import { toast } from 'react-hot-toast';
-import { Search, Navigation2, Plus, Minus, MapPin, X, LocateFixed, Route, PanelRightClose, PanelRightOpen, ArrowRight, Zap, ShieldCheck, Scale, Clock, Gauge } from 'lucide-react';
+import { Search, Navigation2, Plus, Minus, MapPin, X, LocateFixed, Route, PanelRightClose, PanelRightOpen, ArrowRight, Zap, ShieldCheck, Scale, Clock, Gauge, Map as MapIcon } from 'lucide-react';
 import { usePOIs } from '../hooks/usePOIs';
 import { loadPOIIcons } from '../utils/poiIcons';
 
@@ -18,84 +16,7 @@ interface Incident {
   severity: number;
   createdAt: string;
   status: string;
-  type?: string;
-  tags?: string[];
 }
-
-// Helper to create a heatmap layer
-const createHeatmapLayer = (id: string, source: string, color: string): LayerProps => ({
-  id,
-  type: 'heatmap',
-  source,
-  maxzoom: 24, // Show heatmap at all zoom levels
-  paint: {
-    'heatmap-weight': 1,
-    'heatmap-intensity': [
-      'interpolate', ['linear'], ['zoom'],
-      0, 1,
-      12, 3,
-      15, 12,
-      20, 25
-    ],
-    'heatmap-color': [
-      'interpolate', ['linear'], ['heatmap-density'],
-      0, 'rgba(0, 0, 0, 0)',
-      0.2, `${color.replace(')', ', 0.2)').replace('rgb', 'rgba')}`,
-      0.4, `${color.replace(')', ', 0.4)').replace('rgb', 'rgba')}`,
-      0.6, `${color.replace(')', ', 0.6)').replace('rgb', 'rgba')}`,
-      0.8, `${color.replace(')', ', 0.8)').replace('rgb', 'rgba')}`,
-      1, `${color.replace(')', ', 1)').replace('rgb', 'rgba')}`
-    ],
-    // Scale radius exponentially (base 2) so it approximates 300 meters at all zoom levels.
-    // At zoom 15, 1 pixel is ~3.1 meters (at average latitudes), so 300m = ~96 pixels.
-    'heatmap-radius': [
-      'interpolate', ['exponential', 2], ['zoom'],
-      10, 3,
-      15, 96,
-      20, 3072
-    ],
-    'heatmap-opacity': 0.8
-  }
-});
-
-// For Point representation at high zoom levels
-const createPointLayer = (id: string, source: string, color: string): LayerProps => ({
-  id,
-  type: 'circle',
-  source,
-  minzoom: 14,
-  paint: {
-    'circle-radius': 6,
-    'circle-color': color,
-    'circle-stroke-color': 'white',
-    'circle-stroke-width': 2,
-    'circle-opacity': [
-      'interpolate', ['linear'], ['zoom'],
-      14, 0,
-      15, 1
-    ]
-  }
-});
-
-// Draw a literal 300m circle boundary to clearly flag the area
-const createAreaLayer = (id: string, source: string, color: string): LayerProps => ({
-  id,
-  type: 'circle',
-  source,
-  paint: {
-    'circle-radius': [
-      'interpolate', ['exponential', 2], ['zoom'],
-      10, 3,
-      15, 96,
-      20, 3072
-    ],
-    'circle-color': color,
-    'circle-opacity': 0.1,
-    'circle-stroke-color': color,
-    'circle-stroke-width': 1,
-    'circle-stroke-opacity': 0.4
-  }
-});
 
 interface SearchResult {
   placeId?: string;
@@ -312,54 +233,6 @@ const LiveUserMarker = memo(({
 export default function MapComponent() {
   const [incidents, setIncidents] = useState<Incident[]>([]);
 
-  // Categorize pins into GeoJSON FeatureCollections
-  const geojsons = useMemo(() => {
-    const dirtyFeatures: any[] = [];
-    const unsafeFeatures: any[] = [];
-    const crowdedFeatures: any[] = [];
-    const safeFeatures: any[] = [];
-
-    incidents.forEach(pin => {
-      const tags = pin.tags || [];
-      const tagsStr = tags.join(' ').toLowerCase();
-
-      // Categorize based on tags
-      let category = 'safe'; 
-      if (tagsStr.includes('dirty') || tagsStr.includes('unhygienic') || tagsStr.includes('garbage') || tagsStr.includes('trash') || tagsStr.includes('smell')) {
-        category = 'dirty';
-      } else if (tagsStr.includes('unsafe') || tagsStr.includes('danger') || tagsStr.includes('dark') || tagsStr.includes('suspicious') || tagsStr.includes('creepy') || tagsStr.includes('hazard')) {
-        category = 'unsafe';
-      } else if (tagsStr.includes('crowd') || tagsStr.includes('traffic') || tagsStr.includes('busy') || tagsStr.includes('noisy')) {
-        category = 'crowded';
-      } else if (tagsStr.includes('clean') || tagsStr.includes('safe') || tagsStr.includes('well-lit') || tagsStr.includes('walk') || tagsStr.includes('friendly')) {
-        category = 'safe';
-      } else {
-        // Fallback to type if tags are inconclusive
-        if (pin.type === 'danger') category = 'unsafe';
-        else if (pin.type === 'warning') category = 'dirty';
-        else if (pin.type === 'safe') category = 'safe';
-      }
-
-      const feature = {
-        type: 'Feature',
-        geometry: { type: 'Point', coordinates: [pin.longitude, pin.latitude] },
-        properties: { ...pin }
-      };
-
-      if (category === 'dirty') dirtyFeatures.push(feature);
-      else if (category === 'unsafe') unsafeFeatures.push(feature);
-      else if (category === 'crowded') crowdedFeatures.push(feature);
-      else if (category === 'safe') safeFeatures.push(feature);
-    });
-
-    return {
-      dirty: { type: 'FeatureCollection', features: dirtyFeatures },
-      unsafe: { type: 'FeatureCollection', features: unsafeFeatures },
-      crowded: { type: 'FeatureCollection', features: crowdedFeatures },
-      safe: { type: 'FeatureCollection', features: safeFeatures },
-    };
-  }, [incidents]);
-
   // Search State
   const [originQuery, setOriginQuery] = useState('');
   const [destQuery, setDestQuery] = useState('');
@@ -468,39 +341,12 @@ export default function MapComponent() {
   }, [destination, originPoint]);
 
   useEffect(() => {
-    const fetchPins = async () => {
-      try {
-        const session = await fetchAuthSession();
-        const token = session.tokens?.idToken?.toString();
-        
-        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'}/api/v1/pins`, {
-          headers: token ? { 'Authorization': `Bearer ${token}` } : {}
-        });
-        
-        if (res.ok) {
-          const data = await res.json();
-          // The endpoint returned pins, map it to incidents state format
-          setIncidents(data.map((pin: any) => ({
-            ...pin,
-            incidentId: pin.id || pin._id || Math.random().toString(),
-            category: pin.category || pin.type || 'general',
-          })));
-        } else {
-          // fallback to /incidents if pins not configured yet
-          const res2 = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'}/api/v1/incidents`);
-          const data2 = await res2.json();
-          if (data2.success) setIncidents(data2.incidents || []);
-        }
-      } catch (e) {
-        console.warn("Failed to fetch pins:", e);
-      }
-    };
-    
-    fetchPins();
-    
-    // Optionally set up polling every 30s to keep pins fresh
-    const interval = setInterval(fetchPins, 30000);
-    return () => clearInterval(interval);
+    fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'}/api/v1/incidents`)
+      .then(res => res.json())
+      .then(data => { if (data.success) setIncidents(data.incidents || []); })
+      .catch(console.error);
+
+    // Geolocation is now triggered manually via the 'GO' or 'Current Location' buttons.
   }, []);
 
   const searchOrigin = (query: string) => {
@@ -525,15 +371,51 @@ export default function MapComponent() {
         const center = mapRef.current?.getMap()?.getCenter();
         const biasPosition = center ? [center.lng, center.lat] : (latestLocationRef.current ? [latestLocationRef.current.lng, latestLocationRef.current.lat] : undefined);
         
-        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'}/api/v1/search`, {
-          method: 'POST', 
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ query, biasPosition }),
-          signal: originAbortRef.current.signal
-        });
-        const data = await res.json();
-        const results = data.success ? (data.results || []) : [];
-        setOriginResults(results);
+        let results = null;
+        const apiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
+        
+        if (apiKey) {
+          try {
+            const body: any = { input: query, includedRegionCodes: ["IN"] };
+            if (biasPosition) {
+              body.locationBias = {
+                circle: {
+                  center: { latitude: biasPosition[1], longitude: biasPosition[0] },
+                  radius: 50000.0
+                }
+              };
+            }
+            const gRes = await fetch(`https://places.googleapis.com/v1/places:autocomplete`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json', 'X-Goog-Api-Key': apiKey },
+              body: JSON.stringify(body),
+              signal: originAbortRef.current.signal
+            });
+            if (gRes.ok) {
+              const gData = await gRes.json();
+              results = (gData.suggestions || []).map((s: any) => ({
+                placeId: s.placePrediction.placeId,
+                label: s.placePrediction.text.text
+              }));
+            }
+          } catch (err: any) {
+            if (err.name !== 'AbortError') console.warn('Google Places Autocomplete failed, falling back...', err);
+            else throw err;
+          }
+        }
+
+        if (!results) {
+          const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'}/api/v1/search`, {
+            method: 'POST', 
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ query, biasPosition }),
+            signal: originAbortRef.current.signal
+          });
+          const data = await res.json();
+          results = data.success ? (data.results || []) : [];
+        }
+        
+        setOriginResults(results || []);
       } catch (err: any) {
         if (err.name !== 'AbortError') {
           setOriginResults([]);
@@ -541,7 +423,7 @@ export default function MapComponent() {
       } finally {
         setIsSearchingOrigin(false);
       }
-    }, 200);
+    }, 250);
   };
 
   const searchDest = (query: string) => {
@@ -566,15 +448,51 @@ export default function MapComponent() {
         const center = mapRef.current?.getMap()?.getCenter();
         const biasPosition = center ? [center.lng, center.lat] : (latestLocationRef.current ? [latestLocationRef.current.lng, latestLocationRef.current.lat] : undefined);
         
-        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'}/api/v1/search`, {
-          method: 'POST', 
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ query, biasPosition }),
-          signal: destAbortRef.current.signal
-        });
-        const data = await res.json();
-        const results = data.success ? (data.results || []) : [];
-        setDestResults(results);
+        let results = null;
+        const apiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
+        
+        if (apiKey) {
+          try {
+            const body: any = { input: query, includedRegionCodes: ["IN"] };
+            if (biasPosition) {
+              body.locationBias = {
+                circle: {
+                  center: { latitude: biasPosition[1], longitude: biasPosition[0] },
+                  radius: 50000.0
+                }
+              };
+            }
+            const gRes = await fetch(`https://places.googleapis.com/v1/places:autocomplete`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json', 'X-Goog-Api-Key': apiKey },
+              body: JSON.stringify(body),
+              signal: destAbortRef.current.signal
+            });
+            if (gRes.ok) {
+              const gData = await gRes.json();
+              results = (gData.suggestions || []).map((s: any) => ({
+                placeId: s.placePrediction.placeId,
+                label: s.placePrediction.text.text
+              }));
+            }
+          } catch (err: any) {
+            if (err.name !== 'AbortError') console.warn('Google Places Autocomplete failed, falling back...', err);
+            else throw err;
+          }
+        }
+
+        if (!results) {
+          const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'}/api/v1/search`, {
+            method: 'POST', 
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ query, biasPosition }),
+            signal: destAbortRef.current.signal
+          });
+          const data = await res.json();
+          results = data.success ? (data.results || []) : [];
+        }
+        
+        setDestResults(results || []);
       } catch (err: any) {
         if (err.name !== 'AbortError') {
           setDestResults([]);
@@ -582,7 +500,7 @@ export default function MapComponent() {
       } finally {
         setIsSearchingDest(false);
       }
-    }, 200);
+    }, 250);
   };
 
   const calculateRoute = async (origin: { lat: number, lng: number }, dest: { lat: number, lng: number }) => {
@@ -596,9 +514,7 @@ export default function MapComponent() {
       const data = await res.json();
 
       if (!data.success || !data.routes || data.routes.length === 0) {
-        const errorMsg = data.error || 'Unable to calculate route. Please try again.';
-        setRouteError(errorMsg);
-        toast.error(errorMsg);
+        setRouteError(data.error || 'Unable to calculate route. Please try again.');
         return;
       }
 
@@ -607,7 +523,6 @@ export default function MapComponent() {
       setCurrentStepIndex(0);
       setOffRoute(false);
       setRouteError(null);
-      toast.success('Route found!');
 
       if (mapRef.current && !isNavigating) {
         const coords = data.routes[0].Geometry.LineString;
@@ -620,9 +535,7 @@ export default function MapComponent() {
         );
       }
     } catch (err) {
-      const errorMsg = 'Unable to calculate route right now. Please try again.';
-      setRouteError(errorMsg);
-      toast.error(errorMsg);
+      setRouteError('Unable to calculate route right now. Please try again.');
     } finally {
       setIsCalculating(false);
     }
@@ -631,111 +544,31 @@ export default function MapComponent() {
   const handleRouteSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsCalculating(true);
-    setRouteError(null);
-
     let targetStart = originPoint || latestLocationRef.current;
     
-    // 1. Resolve origin if needed
-    if (!targetStart) {
-      if (originPoint) {
-        targetStart = originPoint;
-      } else if (latestLocationRef.current) {
-        targetStart = latestLocationRef.current;
-      } else if (originQuery.trim() && originQuery !== 'Your location') {
-        if (originResults.length > 0) {
-          const loc = await resolveCoordinates(originResults[0]);
-          if (loc) {
-            targetStart = loc;
-            setOriginPoint(targetStart);
-            setOriginQuery(originResults[0].label.split(',')[0].trim());
-            setOriginResults([]);
-          }
-        } else {
-          try {
-            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'}/api/v1/search`, {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ query: originQuery.trim() })
-            });
-            const data = await res.json();
-            if (data.success && data.results && data.results.length > 0) {
-              const loc = await resolveCoordinates(data.results[0]);
-              if (loc) {
-                targetStart = loc;
-                setOriginPoint(targetStart);
-                setOriginQuery(data.results[0].label.split(',')[0].trim());
-              }
-            }
-          } catch (err) {
-            console.error('Failed to geocode origin:', err);
-          }
-        }
-      } else {
-        // "Your location" or empty — try browser geolocation or map center
-        if (navigator.geolocation) {
-          try {
-            const pos = await new Promise<GeolocationPosition>((resolve, reject) => {
-              navigator.geolocation.getCurrentPosition(resolve, reject, { timeout: 4000, enableHighAccuracy: true });
-            });
-            targetStart = { lat: pos.coords.latitude, lng: pos.coords.longitude };
-            latestLocationRef.current = targetStart;
-            setOriginPoint(targetStart);
-          } catch {
-            const center = mapRef.current?.getMap()?.getCenter();
-            if (center) {
-              targetStart = { lat: center.lat, lng: center.lng };
-              setOriginPoint(targetStart);
-            }
-          }
-        } else {
-          const center = mapRef.current?.getMap()?.getCenter();
-          if (center) {
-            targetStart = { lat: center.lat, lng: center.lng };
-            setOriginPoint(targetStart);
-          }
-        }
+    if (!originPoint && originResults.length > 0) {
+      const loc = await resolveCoordinates(originResults[0]);
+      if (loc) {
+        targetStart = loc;
+        setOriginPoint(targetStart);
+        setOriginQuery(originResults[0].label.split(',')[0].trim());
+        setOriginResults([]);
       }
     }
 
-    // 2. Resolve destination if needed
     let targetDest = destination;
-    if (!targetDest && destQuery.trim()) {
-      if (destResults.length > 0) {
-        const loc = await resolveCoordinates(destResults[0]);
-        if (loc) {
-          targetDest = loc;
-          setDestination(targetDest);
-          setDestQuery(destResults[0].label.split(',')[0].trim());
-          setDestResults([]);
-        }
-      } else {
-        try {
-          const center = mapRef.current?.getMap()?.getCenter();
-          const biasPosition = center ? [center.lng, center.lat] : (targetStart ? [targetStart.lng, targetStart.lat] : undefined);
-          const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'}/api/v1/search`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ query: destQuery.trim(), biasPosition })
-          });
-          const data = await res.json();
-          if (data.success && data.results && data.results.length > 0) {
-            const loc = await resolveCoordinates(data.results[0]);
-            if (loc) {
-              targetDest = loc;
-              setDestination(targetDest);
-              setDestQuery(data.results[0].label.split(',')[0].trim());
-            }
-          }
-        } catch (err) {
-          console.error('Failed to geocode destination:', err);
-        }
+    if (!targetDest && destResults.length > 0) {
+      const loc = await resolveCoordinates(destResults[0]);
+      if (loc) {
+        targetDest = loc;
+        setDestination(targetDest);
+        setDestQuery(destResults[0].label.split(',')[0].trim());
+        setDestResults([]);
       }
     }
 
     if (!targetStart || !targetDest) {
-      const msg = !targetStart ? 'Please specify a starting point or allow location access.' : 'Please select or enter a valid destination.';
-      setRouteError(msg);
-      toast.error(msg);
+      setRouteError("Please select both origin and destination.");
       setIsCalculating(false);
       return;
     }
@@ -952,20 +785,23 @@ const incidentFeature = e.features && e.features.find((f: any) => f.layer.id ===
 
   const resolveCoordinates = async (res: SearchResult): Promise<{ lat: number, lng: number } | null> => {
     if (res.point) return { lat: res.point[1], lng: res.point[0] };
+    if (!res.placeId) return null;
     
-    // Resolve coordinates via backend search
-    try {
-      const resp = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'}/api/v1/search`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ query: res.label })
-      });
-      const d = await resp.json();
-      if (d.success && d.results && d.results[0]?.point) {
-        return { lat: d.results[0].point[1], lng: d.results[0].point[0] };
+    const apiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
+    if (apiKey) {
+      try {
+        const gRes = await fetch(`https://places.googleapis.com/v1/places/${res.placeId}?fields=location`, {
+          headers: { 'X-Goog-Api-Key': apiKey }
+        });
+        if (gRes.ok) {
+          const data = await gRes.json();
+          if (data.location) {
+            return { lat: data.location.latitude, lng: data.location.longitude };
+          }
+        }
+      } catch (err) {
+        console.error("Google Place Details failed:", err);
       }
-    } catch (err) {
-      console.error("Coordinate resolution failed:", err);
     }
     return null;
   };
@@ -1081,16 +917,28 @@ const incidentFeature = e.features && e.features.find((f: any) => f.layer.id ===
 
   if (!initialLocation) {
     return (
-      <div className="w-full h-full flex flex-col items-center justify-center bg-[#0a0a0a] text-white p-6 text-center font-sans z-50 absolute inset-0">
-        <div className="relative w-20 h-20 mb-6 flex justify-center items-center">
-          <div className="absolute inset-0 border-4 border-white/10 rounded-full"></div>
-          <div className="absolute inset-0 border-4 border-blue-500 rounded-full border-t-transparent animate-spin"></div>
-          <span className="text-2xl">📍</span>
+      <div className="w-full h-full flex flex-col items-center justify-center bg-[#040711] text-white p-6 text-center font-sans z-50 absolute inset-0 overflow-hidden">
+        {/* Animated Background Elements */}
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-teal-500/5 blur-[120px] rounded-full"></div>
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[300px] h-[300px] bg-cyan-500/10 blur-[80px] rounded-full"></div>
+
+        <div className="relative w-24 h-24 mb-8 flex justify-center items-center">
+          {/* Outer Rotating Rings */}
+          <div className="absolute inset-0 border-2 border-dashed border-teal-500/30 rounded-full animate-[spin_10s_linear_infinite]"></div>
+          <div className="absolute inset-2 border-2 border-cyan-400/50 rounded-full border-t-transparent animate-[spin_2s_linear_infinite]"></div>
+          <div className="absolute inset-4 border-2 border-white/10 rounded-full border-b-transparent animate-[spin_3s_linear_infinite_reverse]"></div>
+          
+          {/* Center Glowing Map Icon */}
+          <div className="relative z-10 w-12 h-12 bg-teal-950/80 rounded-full flex items-center justify-center border border-teal-500/50 shadow-[0_0_20px_rgba(45,212,191,0.4)]">
+            <MapIcon className="w-6 h-6 text-teal-400 animate-pulse" />
+          </div>
         </div>
-        <h2 className="text-2xl font-black mb-2 tracking-tight">Acquiring GPS Signal...</h2>
-        <p className="text-slate-400 font-medium animate-pulse">Initializing your location</p>
-        {/* Optional text or spinner inside the loading screen */}
-        <p className="text-gray-400 mt-4 font-medium animate-pulse">Finding your location...</p>
+
+        <h2 className="text-2xl font-black mb-2 tracking-tight uppercase text-white">Acquiring Location</h2>
+        <div className="flex items-center gap-2 text-teal-400/80 font-mono text-xs uppercase tracking-widest animate-pulse">
+          <div className="w-1.5 h-1.5 bg-teal-400 rounded-full"></div>
+          Synchronizing with satellite network
+        </div>
       </div>
     );
   }
@@ -1331,7 +1179,7 @@ const incidentFeature = e.features && e.features.find((f: any) => f.layer.id ===
             </button>
             <button
               onClick={startNavigation}
-              className="flex-[2.5] bg-white hover:bg-gray-100 text-black font-bold py-3.5 rounded-2xl shadow-2xl transition-transform hover:scale-[1.01] flex items-center justify-center gap-2 text-sm"
+              className="flex-[2.5] bg-[#00dfc0] hover:bg-[#00c9ad] text-slate-950 font-bold py-3.5 rounded-2xl shadow-[0_0_15px_rgba(0,223,192,0.3)] transition-transform hover:scale-[1.01] flex items-center justify-center gap-2 text-sm"
             >
               <Navigation2 className="w-4 h-4 fill-current" />
               Start Navigation
@@ -1502,39 +1350,6 @@ const incidentFeature = e.features && e.features.find((f: any) => f.layer.id ===
         onClick={onMapClick}
         interactiveLayerIds={interactiveLayerIds}
       >
-        {/* Heatmap Sources & Layers */}
-        {geojsons.dirty.features.length > 0 && (
-        <Source id="dirty-source" type="geojson" data={geojsons.dirty as any}>
-          <Layer {...createHeatmapLayer('dirty-heatmap', 'dirty-source', 'rgb(255, 165, 0)')} />
-          <Layer {...createAreaLayer('dirty-area', 'dirty-source', 'rgb(255, 165, 0)')} />
-          <Layer {...createPointLayer('dirty-point', 'dirty-source', 'rgb(255, 165, 0)')} />
-        </Source>
-        )}
-
-        {geojsons.unsafe.features.length > 0 && (
-        <Source id="unsafe-source" type="geojson" data={geojsons.unsafe as any}>
-          <Layer {...createHeatmapLayer('unsafe-heatmap', 'unsafe-source', 'rgb(255, 0, 0)')} />
-          <Layer {...createAreaLayer('unsafe-area', 'unsafe-source', 'rgb(255, 0, 0)')} />
-          <Layer {...createPointLayer('unsafe-point', 'unsafe-source', 'rgb(255, 0, 0)')} />
-        </Source>
-        )}
-
-        {geojsons.crowded.features.length > 0 && (
-        <Source id="crowded-source" type="geojson" data={geojsons.crowded as any}>
-          <Layer {...createHeatmapLayer('crowded-heatmap', 'crowded-source', 'rgb(0, 0, 255)')} />
-          <Layer {...createAreaLayer('crowded-area', 'crowded-source', 'rgb(0, 0, 255)')} />
-          <Layer {...createPointLayer('crowded-point', 'crowded-source', 'rgb(0, 0, 255)')} />
-        </Source>
-        )}
-
-        {geojsons.safe.features.length > 0 && (
-        <Source id="safe-source" type="geojson" data={geojsons.safe as any}>
-          <Layer {...createHeatmapLayer('safe-heatmap', 'safe-source', 'rgb(0, 255, 0)')} />
-          <Layer {...createAreaLayer('safe-area', 'safe-source', 'rgb(0, 255, 0)')} />
-          <Layer {...createPointLayer('safe-point', 'safe-source', 'rgb(0, 255, 0)')} />
-        </Source>
-        )}
-        
         {/* Map Layers (Alternative Routes & Active Route) */}
         {memoizedAlternativeRoutes}
 
@@ -1695,7 +1510,7 @@ const incidentFeature = e.features && e.features.find((f: any) => f.layer.id ===
                     setDestination({ lat: selectedPoi.lat, lng: selectedPoi.lon });
                     setSelectedPoi(null);
                   }} 
-                  className="flex-1 bg-white text-black font-bold py-2 rounded-xl text-sm hover:bg-gray-200 transition-colors"
+                  className="flex-1 bg-[#00dfc0] hover:bg-[#00c9ad] text-slate-950 font-bold py-2 rounded-xl text-sm shadow-[0_0_15px_rgba(0,223,192,0.3)] transition-colors"
                 >
                   Directions
                 </button>

@@ -23,11 +23,11 @@ const INCIDENT_OPTIONS: IncidentOption[] = [
   {
     id: 'incident',
     title: 'General Incident',
-    activeBorder: 'border-[#00dfc0]',
-    activeBg: 'bg-gradient-to-b from-teal-950/60 to-[#021a1c]/70',
-    activeRing: 'ring-[#00dfc0]/50',
-    accentText: 'text-[#00dfc0]',
-    activeShadow: 'shadow-[0_0_20px_rgba(0,223,192,0.25),inset_0_0_12px_rgba(0,223,192,0.1)]',
+    activeBorder: 'border-white',
+    activeBg: 'bg-white/10',
+    activeRing: 'ring-white/20',
+    accentText: 'text-white',
+    activeShadow: 'shadow-[0_0_15px_rgba(255,255,255,0.1)]',
     icon: (
       <svg className="w-6 h-6 sm:w-7 sm:h-7" fill="none" viewBox="0 0 24 24" stroke="currentColor">
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
@@ -37,11 +37,11 @@ const INCIDENT_OPTIONS: IncidentOption[] = [
   {
     id: 'danger',
     title: 'Danger Zone',
-    activeBorder: 'border-rose-500',
-    activeBg: 'bg-gradient-to-b from-rose-950/60 to-[#1e050b]/70',
-    activeRing: 'ring-rose-500/50',
-    accentText: 'text-rose-400',
-    activeShadow: 'shadow-[0_0_20px_rgba(244,63,94,0.25),inset_0_0_12px_rgba(244,63,94,0.1)]',
+    activeBorder: 'border-white',
+    activeBg: 'bg-white/10',
+    activeRing: 'ring-white/20',
+    accentText: 'text-white',
+    activeShadow: 'shadow-[0_0_15px_rgba(255,255,255,0.1)]',
     icon: (
       <svg className="w-6 h-6 sm:w-7 sm:h-7" fill="none" viewBox="0 0 24 24" stroke="currentColor">
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
@@ -51,11 +51,11 @@ const INCIDENT_OPTIONS: IncidentOption[] = [
   {
     id: 'warning',
     title: 'Hazard / Warning',
-    activeBorder: 'border-amber-400',
-    activeBg: 'bg-gradient-to-b from-amber-950/60 to-[#1c1203]/70',
-    activeRing: 'ring-amber-400/50',
-    accentText: 'text-amber-400',
-    activeShadow: 'shadow-[0_0_20px_rgba(245,158,11,0.25),inset_0_0_12px_rgba(245,158,11,0.1)]',
+    activeBorder: 'border-white',
+    activeBg: 'bg-white/10',
+    activeRing: 'ring-white/20',
+    accentText: 'text-white',
+    activeShadow: 'shadow-[0_0_15px_rgba(255,255,255,0.1)]',
     icon: (
       <svg className="w-6 h-6 sm:w-7 sm:h-7" fill="none" viewBox="0 0 24 24" stroke="currentColor">
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -82,6 +82,7 @@ export default function ReportPage() {
 
   // Map and Geolocation state
   const mapRef = useRef<MapRef>(null);
+  const bgRef = useRef<HTMLDivElement>(null);
   const [locationStatus, setLocationStatus] = useState<'idle' | 'detecting' | 'detected' | 'error'>('idle');
   const [locationError, setLocationError] = useState<string | null>(null);
   const [showManualCoords, setShowManualCoords] = useState(false);
@@ -107,7 +108,6 @@ export default function ReportPage() {
   const descInputId = useId();
   const tagInputId = useId();
 
-  // Cleanup object URL on unmount
   useEffect(() => {
     return () => {
       if (selectedImage) {
@@ -115,6 +115,46 @@ export default function ReportPage() {
       }
     };
   }, [selectedImage]);
+
+  // Noticeable yet restrained Desktop Pointer Parallax for background
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const isMobile = window.matchMedia('(max-width: 640px)').matches;
+    const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (isMobile || prefersReducedMotion) return;
+
+    let rafId: number | null = null;
+    let targetX = 0;
+    let targetY = 0;
+    let currentX = 0;
+    let currentY = 0;
+
+    const handlePointerMove = (e: PointerEvent) => {
+      targetX = (e.clientX / window.innerWidth) * 2 - 1;
+      targetY = (e.clientY / window.innerHeight) * 2 - 1;
+      if (!rafId) rafId = requestAnimationFrame(updateParallax);
+    };
+
+    const updateParallax = () => {
+      currentX += (targetX - currentX) * 0.055;
+      currentY += (targetY - currentY) * 0.055;
+      if (bgRef.current) {
+        bgRef.current.style.setProperty('--plx-x', `${(currentX * 10).toFixed(2)}px`);
+        bgRef.current.style.setProperty('--plx-y', `${(currentY * 10).toFixed(2)}px`);
+      }
+      if (Math.abs(targetX - currentX) > 0.001 || Math.abs(targetY - currentY) > 0.001) {
+        rafId = requestAnimationFrame(updateParallax);
+      } else {
+        rafId = null;
+      }
+    };
+
+    window.addEventListener('pointermove', handlePointerMove, { passive: true });
+    return () => {
+      window.removeEventListener('pointermove', handlePointerMove);
+      if (rafId) cancelAnimationFrame(rafId);
+    };
+  }, []);
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -281,7 +321,7 @@ export default function ReportPage() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          userId: 'test-user-id', // Would come from Auth in production
+          userId: 'test-user-id',
           type,
           description,
           latitude: latNum,
@@ -305,321 +345,160 @@ export default function ReportPage() {
 
   const parsedLat = parseFloat(latitude);
   const parsedLng = parseFloat(longitude);
-  const formattedLat = !isNaN(parsedLat) ? parsedLat.toFixed(4) : latitude;
-  const formattedLng = !isNaN(parsedLng) ? parsedLng.toFixed(4) : longitude;
 
   return (
-    <main className="min-h-[calc(100dvh-5rem)] bg-[#020713] text-slate-100 relative overflow-x-hidden py-5 sm:py-8 lg:py-12 px-3 sm:px-6 lg:px-8 flex flex-col items-center justify-start sm:justify-center font-sans">
-      {/* Inline styles for subtle cinematic animations */}
+    <main className="min-h-[calc(100dvh-5rem)] bg-black text-white relative overflow-x-hidden py-10 sm:py-12 px-6 sm:px-8 flex flex-col items-center justify-start sm:justify-center font-sans">
+      
       <style>{`
-        @keyframes routeAtmospherePulse {
-          0%, 100% { opacity: 0.75; }
-          50% { opacity: 1; }
+        @keyframes meshDrift1 {
+          0% { transform: translate(0, 0) scale(1) rotate(0deg); }
+          33% { transform: translate(4%, -6%) scale(1.1) rotate(20deg); }
+          66% { transform: translate(-3%, 4%) scale(0.9) rotate(-10deg); }
+          100% { transform: translate(0, 0) scale(1) rotate(0deg); }
         }
-        @keyframes waypointRadarPulse {
-          0%, 100% { transform: scale(1); opacity: 0.85; }
-          50% { transform: scale(1.08); opacity: 1; }
+        @keyframes meshDrift2 {
+          0% { transform: translate(0, 0) scale(1) rotate(0deg); }
+          33% { transform: translate(-5%, 5%) scale(1.15) rotate(-15deg); }
+          66% { transform: translate(4%, -3%) scale(0.85) rotate(15deg); }
+          100% { transform: translate(0, 0) scale(1) rotate(0deg); }
         }
-        @keyframes photonTracerFlow {
-          from { stroke-dashoffset: 900; }
-          to { stroke-dashoffset: 0; }
+        /* Map Routing Animations */
+        @keyframes travelLine {
+          from { stroke-dashoffset: 4000; }
+          to { stroke-dashoffset: -1000; }
         }
-        @keyframes reticleSweepSpin {
-          0% { transform: rotate(0deg); }
-          100% { transform: rotate(360deg); }
+        @keyframes travelLineRev {
+          from { stroke-dashoffset: -1000; }
+          to { stroke-dashoffset: 4000; }
         }
-        @keyframes orbitDot {
-          0% { transform: rotate(0deg); }
-          100% { transform: rotate(360deg); }
+        @keyframes pulseNode {
+          0%, 100% { opacity: 0.3; transform: scale(0.8); }
+          50% { opacity: 1; transform: scale(1.3); }
         }
-        .anim-route-glow {
-          animation: routeAtmospherePulse 4s ease-in-out infinite;
+        @keyframes floatIcon {
+          0%, 100% { transform: translateY(0px) scale(0.95); opacity: 0.4; }
+          50% { transform: translateY(-8px) scale(1.05); opacity: 1; }
         }
-        .anim-waypoint-pulse {
-          animation: waypointRadarPulse 3.5s ease-in-out infinite;
-        }
-        .anim-tracer-photon {
-          animation: photonTracerFlow 13s linear infinite;
-        }
-        .anim-radar-sweep-spin {
-          animation: reticleSweepSpin 3.5s linear infinite;
-        }
-        .anim-orbit-dot {
-          animation: orbitDot 8s linear infinite;
-        }
-        @media (prefers-reduced-motion: reduce) {
-          .anim-route-glow, .anim-waypoint-pulse, .anim-tracer-photon, .anim-radar-sweep-spin, .anim-orbit-dot {
-            animation: none !important;
-          }
+        
+        .anim-travel-1 { stroke-dasharray: 400 3600; animation: travelLine 12s linear infinite; }
+        .anim-travel-2 { stroke-dasharray: 250 2800; animation: travelLineRev 15s linear infinite; }
+        .anim-travel-3 { stroke-dasharray: 150 2500; animation: travelLine 10s linear infinite; }
+        
+        .anim-node { animation: pulseNode 3s ease-in-out infinite; transform-origin: center; }
+        
+        .anim-float-1 { animation: floatIcon 5s ease-in-out infinite; }
+        .anim-float-2 { animation: floatIcon 6s ease-in-out infinite 2s; }
+        .anim-float-3 { animation: floatIcon 4s ease-in-out infinite 3.5s; }
+
+        /* Subtle noise texture overlay */
+        .bg-noise {
+          background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.04'/%3E%3C/svg%3E");
+          background-repeat: repeat;
         }
       `}</style>
 
-      {/* ========================================================================= */}
-      {/* DENSE NOCTURNAL CITY MAP BACKGROUND (Inline SVG & Telemetry Overlays)    */}
-      {/* ========================================================================= */}
-      <div className="absolute inset-0 pointer-events-none overflow-hidden select-none" aria-hidden="true">
-        {/* Vignette Depth Gradient */}
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,transparent_30%,rgba(2,7,19,0.92)_100%)]" />
-
-        {/* Ambient atmospheric teal and cyan glows */}
-        <div className="absolute top-1/2 left-1/4 -translate-y-1/2 w-[700px] h-[600px] bg-[#00dfc0]/[0.03] sm:bg-[#00dfc0]/[0.045] rounded-full blur-[80px] sm:blur-[150px]" />
-        <div className="absolute top-1/3 right-1/4 w-[550px] h-[550px] bg-cyan-600/[0.025] sm:bg-cyan-600/[0.04] rounded-full blur-[70px] sm:blur-[140px]" />
-
-        <svg
-          className="absolute inset-0 w-full h-full"
-          preserveAspectRatio="xMidYMid slice"
-          viewBox="0 0 1440 900"
-        >
-          <defs>
-            {/* Wide atmospheric blur for active SafeRoute */}
-            <filter id="denseRouteGlow" x="-30%" y="-30%" width="160%" height="160%">
-              <feGaussianBlur stdDeviation="12" result="blur" />
-              <feMerge>
-                <feMergeNode in="blur" />
-                <feMergeNode in="SourceGraphic" />
-              </feMerge>
-            </filter>
-
-            {/* Marker glow filter */}
-            <filter id="denseMarkerGlow" x="-50%" y="-50%" width="200%" height="200%">
-              <feGaussianBlur stdDeviation="4.5" result="blur" />
-              <feMerge>
-                <feMergeNode in="blur" />
-                <feMergeNode in="SourceGraphic" />
-              </feMerge>
-            </filter>
-
-            {/* Radar card internal grid pattern */}
-            <pattern id="radarCardGrid" width="28" height="28" patternUnits="userSpaceOnUse">
-              <path d="M 28 0 L 0 0 0 28" fill="none" stroke="#00dfc0" strokeWidth="0.5" strokeOpacity="0.12" />
-            </pattern>
-          </defs>
-
-          {/* LAYER 1: RIVERDALE WATERWAY (Deep blue curved river on western edge) */}
-          <path
-            d="M 140 -50 C 200 180, 260 380, 180 560 C 110 700, 40 790, -40 860 L -120 860 L -120 -50 Z"
-            fill="#03162b"
-            opacity="0.65"
+      {/* Cinematic Animated Background */}
+      <div ref={bgRef} className="absolute inset-0 pointer-events-none overflow-hidden flex items-center justify-center bg-black">
+        <div className="absolute inset-0 bg-noise mix-blend-overlay z-20 opacity-60"></div>
+        
+        {/* Soft Glowing Blobs */}
+        <div className="absolute inset-0 z-0">
+          <div 
+            className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[60vw] h-[60vw] max-w-[800px] max-h-[800px] bg-cyan-500/20 rounded-full blur-[80px] anim-mesh-1"
+            style={{ transform: 'translate3d(calc(-50% - 10% + var(--plx-x, 0px)), calc(-50% - 10% + var(--plx-y, 0px)), 0)' }}
           />
-          <path
-            d="M 140 -50 C 200 180, 260 380, 180 560 C 110 700, 40 790, -40 860"
-            stroke="#0a2a4e"
-            strokeWidth="3"
-            fill="none"
-            opacity="0.7"
+          <div 
+            className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[50vw] h-[50vw] max-w-[600px] max-h-[600px] bg-teal-500/15 rounded-full blur-[70px] anim-mesh-2"
+            style={{ transform: 'translate3d(calc(-50% + 15% + var(--plx-x, 0px)), calc(-50% + 15% + var(--plx-y, 0px)), 0)' }}
           />
+        </div>
 
-          {/* LAYER 2: DENSE CITY BUILDING SILHOUETTES & PARCELS */}
-          <g fill="#061224" fillOpacity="0.45" stroke="#0b1d36" strokeWidth="0.8">
-            {/* Northwest District */}
-            <rect x="20" y="40" width="80" height="70" rx="3" />
-            <rect x="180" y="30" width="100" height="60" rx="3" />
-            <rect x="220" y="110" width="120" height="80" rx="3" />
-            <rect x="360" y="80" width="90" height="90" rx="3" />
-            <rect x="470" y="70" width="110" height="70" rx="3" />
-            <rect x="600" y="50" width="130" height="80" rx="3" />
+        {/* Ultra-Minimalist Routing Paths (No Clumsy Grid) */}
+        <div className="absolute inset-0 flex items-center justify-center opacity-100 z-10" style={{ transform: 'translate3d(calc(var(--plx-x, 0px) * 0.1), calc(var(--plx-y, 0px) * 0.1), 0)' }}>
+          <svg className="w-full h-full min-w-[1200px]" viewBox="0 0 1440 900" fill="none" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid slice">
+            <defs>
+              <filter id="routeGlow" x="-50%" y="-50%" width="200%" height="200%">
+                <feGaussianBlur stdDeviation="6" result="blur" />
+                <feMerge>
+                  <feMergeNode in="blur" />
+                  <feMergeNode in="SourceGraphic" />
+                </feMerge>
+              </filter>
+              <mask id="fadeMask">
+                <radialGradient id="fadeGrad" cx="50%" cy="50%" r="50%" fx="50%" fy="50%">
+                  <stop offset="0%" stopColor="white" stopOpacity="1" />
+                  <stop offset="75%" stopColor="white" stopOpacity="0.9" />
+                  <stop offset="100%" stopColor="white" stopOpacity="0" />
+                </radialGradient>
+                <rect width="1440" height="900" fill="url(#fadeGrad)" />
+              </mask>
+            </defs>
+            
+            <g mask="url(#fadeMask)">
+              
+              {/* Floating Ambient Small Icons */}
+              <g className="anim-float-1" transform="translate(300, 300)">
+                <polygon points="0,-8 8,0 0,8 -8,0" fill="none" stroke="#ffffff" strokeWidth="2" opacity="0.8" />
+                <circle cx="0" cy="0" r="2.5" fill="#ffffff" />
+              </g>
 
-            {/* Northeast District */}
-            <rect x="760" y="40" width="100" height="70" rx="3" />
-            <rect x="880" y="50" width="120" height="90" rx="3" />
-            <rect x="1020" y="60" width="90" height="80" rx="3" />
-            <rect x="1130" y="40" width="140" height="90" rx="3" />
-            <rect x="1290" y="50" width="120" height="80" rx="3" />
+              <g className="anim-float-2" transform="translate(1050, 250)">
+                <path d="M-6,0 L6,0 M0,-6 L0,6" stroke="#ffffff" strokeWidth="2.5" opacity="0.9" />
+                <circle cx="0" cy="0" r="2" fill="#ffffff" />
+              </g>
 
-            {/* Central-West Flank */}
-            <rect x="40" y="360" width="90" height="110" rx="3" />
-            <rect x="190" y="360" width="100" height="90" rx="3" />
-            <rect x="50" y="620" width="110" height="100" rx="3" />
-            <rect x="230" y="680" width="120" height="90" rx="3" />
+              <g className="anim-float-3" transform="translate(1200, 750)">
+                <rect x="-5" y="-5" width="10" height="10" fill="none" stroke="#ffffff" strokeWidth="2" transform="rotate(45)" opacity="0.7" />
+              </g>
 
-            {/* Central-East Flank */}
-            <rect x="1180" y="330" width="110" height="80" rx="3" />
-            <rect x="1310" y="320" width="90" height="100" rx="3" />
-            <rect x="1170" y="540" width="100" height="90" rx="3" />
-            <rect x="1290" y="560" width="110" height="80" rx="3" />
+              <g className="anim-float-1" transform="translate(250, 750)" style={{ animationDelay: '2s' }}>
+                <circle cx="0" cy="0" r="7" fill="none" stroke="#ffffff" strokeWidth="2" strokeDasharray="2 4" opacity="0.9" />
+                <circle cx="0" cy="0" r="2.5" fill="#ffffff" />
+              </g>
 
-            {/* Southern Perimeter */}
-            <rect x="390" y="740" width="120" height="90" rx="3" />
-            <rect x="530" y="760" width="100" height="80" rx="3" />
-            <rect x="650" y="750" width="140" height="80" rx="3" />
-            <rect x="810" y="740" width="110" height="90" rx="3" />
-            <rect x="940" y="760" width="120" height="80" rx="3" />
-          </g>
+              <g strokeLinecap="round" strokeLinejoin="round">
+                {/* Curve 1: Smooth sweeping central route */}
+                <path d="M -200 650 C 300 650, 550 350, 950 350 C 1200 350, 1600 450, 1600 450" stroke="#ffffff" strokeWidth="2" opacity="0.2" />
+                <path d="M -200 650 C 300 650, 550 350, 950 350 C 1200 350, 1600 450, 1600 450" stroke="#ffffff" strokeWidth="5" className="anim-travel-1" opacity="1" filter="url(#routeGlow)" />
+                <circle cx="950" cy="350" r="5" fill="#ffffff" className="anim-node" />
+                <circle cx="550" cy="350" r="3" fill="#ffffff" className="anim-node" style={{ animationDelay: '2s' }} />
 
-          {/* LAYER 3: SECONDARY LOCAL ROAD NETWORK (Subtle low-opacity dark lines) */}
-          <g stroke="#0e2340" strokeWidth="1.2" strokeOpacity="0.75" fill="none">
-            <line x1="0" y1="90" x2="1440" y2="90" />
-            <line x1="0" y1="210" x2="1440" y2="210" />
-            <line x1="0" y1="330" x2="1440" y2="330" />
-            <line x1="0" y1="450" x2="1440" y2="450" />
-            <line x1="0" y1="580" x2="1440" y2="580" />
-            <line x1="0" y1="700" x2="1440" y2="700" />
-            <line x1="0" y1="820" x2="1440" y2="820" />
-
-            <line x1="120" y1="0" x2="120" y2="900" />
-            <line x1="260" y1="0" x2="260" y2="900" />
-            <line x1="420" y1="0" x2="420" y2="900" />
-            <line x1="560" y1="0" x2="560" y2="900" />
-            <line x1="720" y1="0" x2="720" y2="900" />
-            <line x1="860" y1="0" x2="860" y2="900" />
-            <line x1="1000" y1="0" x2="1000" y2="900" />
-            <line x1="1140" y1="0" x2="1140" y2="900" />
-            <line x1="1280" y1="0" x2="1280" y2="900" />
-          </g>
-
-          {/* LAYER 4: MAJOR THOROUGHFARES & ARTERIAL HIGHWAYS */}
-          <g stroke="#163864" strokeWidth="2.8" fill="none" opacity="0.85">
-            <path d="M -20 180 Q 320 220 620 190 T 1220 230 L 1460 210" />
-            <path d="M -20 520 C 300 480, 520 620, 840 540 S 1240 500, 1460 560" />
-            <path d="M 310 -20 Q 350 320 300 580 T 360 920" />
-            <path d="M 1120 -20 Q 1080 340 1140 600 T 1100 920" />
-            <path d="M -20 780 L 1460 760" stroke="#102b4e" strokeWidth="2" />
-          </g>
-
-          {/* LAYER 5: ACTIVE PRIMARY SAFEROUTE CORRIDOR (Glowing Teal Arterial) */}
-          <g>
-            <path
-              d="M 60 780 C 220 740, 290 610, 380 440 S 680 340, 820 280 S 1120 260, 1380 220"
-              stroke="#00dfc0"
-              strokeWidth="10"
-              fill="none"
-              opacity="0.12"
-              filter="url(#denseRouteGlow)"
-            />
-            <path
-              d="M 60 780 C 220 740, 290 610, 380 440 S 680 340, 820 280 S 1120 260, 1380 220"
-              stroke="#00dfc0"
-              strokeWidth="4"
-              fill="none"
-              opacity="0.55"
-              className="anim-route-glow"
-            />
-            <path
-              d="M 60 780 C 220 740, 290 610, 380 440 S 680 340, 820 280 S 1120 260, 1380 220"
-              stroke="#ffffff"
-              strokeWidth="1.8"
-              strokeDasharray="14 180"
-              fill="none"
-              opacity="0.9"
-              className="anim-tracer-photon"
-            />
-          </g>
-
-          {/* LAYER 6: SECONDARY CORRIDORS (Amber & Rose incident telemetry lines) */}
-          <g>
-            <path
-              d="M 380 440 Q 520 620, 780 660 T 1270 480"
-              stroke="#f59e0b"
-              strokeWidth="2.2"
-              strokeDasharray="6 8"
-              fill="none"
-              opacity="0.45"
-            />
-            <path
-              d="M 600 80 Q 760 160, 820 280 T 960 520"
-              stroke="#06b6d4"
-              strokeWidth="1.8"
-              strokeDasharray="4 6"
-              fill="none"
-              opacity="0.4"
-            />
-          </g>
-
-          {/* LAYER 7: RADAR & TELEMETRY WAYPOINT NODES */}
-          {/* 1. WEST WAYPOINT RADAR */}
-          <g transform="translate(180, 680)" className="anim-waypoint-pulse">
-            <circle cx="0" cy="0" r="28" stroke="#00dfc0" strokeWidth="0.8" strokeDasharray="3 4" opacity="0.3" fill="none" />
-            <circle cx="0" cy="0" r="16" stroke="#00dfc0" strokeWidth="1" opacity="0.4" fill="none" />
-            <circle cx="0" cy="0" r="6" fill="#00dfc0" opacity="0.8" />
-            <circle cx="0" cy="0" r="2" fill="#ffffff" />
-          </g>
-
-          {/* 2. DANGER ZONE PIN (Rose Red) */}
-          <g transform="translate(1040, 410)" filter="url(#denseMarkerGlow)">
-            <line x1="0" y1="0" x2="0" y2="18" stroke="#f43f5e" strokeWidth="1.5" />
-            <circle cx="0" cy="0" r="14" stroke="#f43f5e" strokeWidth="1.2" opacity="0.4" fill="none" />
-            <circle cx="0" cy="0" r="5" fill="#f43f5e" />
-          </g>
-
-          {/* 3. HAZARD ZONE PIN (Amber) */}
-          <g transform="translate(1270, 480)" filter="url(#denseMarkerGlow)">
-            <line x1="0" y1="0" x2="0" y2="16" stroke="#f59e0b" strokeWidth="1.5" />
-            <circle cx="0" cy="0" r="12" stroke="#f59e0b" strokeWidth="1.2" opacity="0.4" fill="none" />
-            <circle cx="0" cy="0" r="5" fill="#f59e0b" />
-          </g>
-
-          {/* 4. UPPER-RIGHT TEAL SAFETY NODE (With stem) */}
-          <g transform="translate(1380, 220)">
-            <circle cx="0" cy="0" r="10" stroke="#00dfc0" strokeWidth="1.2" opacity="0.4" fill="none" />
-            <circle cx="0" cy="0" r="4.5" fill="#00dfc0" />
-          </g>
-        </svg>
+                {/* Curve 2: Elegant crossing route */}
+                <path d="M -100 250 C 350 150, 850 850, 1500 750" stroke="#ffffff" strokeWidth="2" opacity="0.15" />
+                <path d="M -100 250 C 350 150, 850 850, 1500 750" stroke="#ffffff" strokeWidth="4" className="anim-travel-2" opacity="0.8" filter="url(#routeGlow)" />
+                
+                {/* Curve 3: Vertical subtle topographic line */}
+                <path d="M 250 1100 C 450 750, 350 250, 850 -200" stroke="#ffffff" strokeWidth="2" opacity="0.15" strokeDasharray="6 18" />
+                <path d="M 250 1100 C 450 750, 350 250, 850 -200" stroke="#ffffff" strokeWidth="4" className="anim-travel-3" opacity="0.6" filter="url(#routeGlow)" />
+                <circle cx="450" cy="750" r="4" fill="#ffffff" className="anim-node" style={{ animationDelay: '1.5s'}} />
+              </g>
+            </g>
+          </svg>
+        </div>
       </div>
 
-      {/* ========================================================================= */}
-      {/* CENTRAL SCENE / REPORTING WORKSPACE (Responsive Mobile-First & Desktop)   */}
-      {/* ========================================================================= */}
-      <div className="w-full max-w-3xl mx-auto relative z-10 flex flex-col items-center">
+      <div className="w-[90%] sm:w-full max-w-[800px] relative z-20 flex flex-col items-center">
         
         {/* COMPACT TOP INTRO */}
-        <header className="text-center space-y-1 max-w-md mx-auto px-2">
-          {/* Eyebrow */}
+        <header className="text-center space-y-1 w-full mx-auto px-2 mb-6">
           <div className="flex items-center justify-center gap-1.5 sm:gap-2">
-            <span className="w-1.5 h-1.5 rounded-full bg-[#00dfc0] shadow-[0_0_6px_#00dfc0]" />
-            <span className="text-[10px] sm:text-[11px] font-mono tracking-[0.2em] text-[#00dfc0] font-bold uppercase">
+            <span className="w-1.5 h-1.5 rounded-full bg-zinc-400" />
+            <span className="text-[10px] sm:text-[11px] font-mono tracking-[0.2em] text-zinc-400 font-bold uppercase">
               COMMUNITY SAFETY
             </span>
           </div>
-
-          {/* Heading */}
           <h1 className="text-xl sm:text-2xl md:text-3xl font-extrabold uppercase tracking-tight text-white leading-tight">
-            Report an <span className="text-[#00dfc0] drop-shadow-[0_0_20px_rgba(0,223,192,0.4)]">Incident</span>
+            REPORT AN INCIDENT
           </h1>
-
-          {/* Supporting line */}
-          <p className="text-xs sm:text-sm text-slate-400 font-normal leading-relaxed">
-            Help keep nearby routes safer.
-          </p>
         </header>
 
-        {/* RESPONSIVE HORIZONTAL WORKFLOW MILESTONE INDICATOR */}
-        <div
-          role="navigation"
-          aria-label="Reporting progress"
-          className="flex items-center justify-center gap-1.5 sm:gap-4 my-2.5 sm:my-4 text-[10px] sm:text-[11px] font-mono uppercase tracking-wider sm:tracking-[0.15em] select-none w-full max-w-xs sm:max-w-none"
-        >
-          {/* Step 1 indicator with glowing pill */}
-          <div className="flex items-center gap-1 sm:gap-1.5 px-2.5 sm:px-3 py-1 rounded-full bg-teal-500/15 border border-[#00dfc0]/50 text-[#00dfc0] font-semibold shadow-[0_0_12px_rgba(0,223,192,0.25)] shrink-0">
-            <span className="w-1.5 h-1.5 rounded-full bg-[#00dfc0] shadow-[0_0_5px_#00dfc0]" />
-            <span>01 TYPE</span>
-          </div>
-
-          <div className="flex-1 max-w-[16px] sm:max-w-[56px] h-[1px] bg-gradient-to-r from-[#00dfc0]/70 to-[#00dfc0]/20 shrink" />
-
-          {/* Step 2 indicator */}
-          <div className={`flex items-center gap-1 sm:gap-1.5 font-semibold transition-colors shrink-0 ${latitude && longitude ? 'text-[#00dfc0]' : 'text-slate-400'}`}>
-            <span className={`w-1.5 h-1.5 rounded-full transition-colors ${latitude && longitude ? 'bg-[#00dfc0] shadow-[0_0_6px_#00dfc0]' : 'bg-slate-600'}`} />
-            <span>02 LOCATION</span>
-          </div>
-
-          <div className="flex-1 max-w-[16px] sm:max-w-[56px] h-[1px] bg-gradient-to-r from-[#00dfc0]/20 to-slate-700 shrink" />
-
-          {/* Step 3 indicator */}
-          <div className={`flex items-center gap-1 sm:gap-1.5 font-semibold transition-colors shrink-0 ${description.trim() ? 'text-[#00dfc0]' : 'text-slate-500'}`}>
-            <span className={`w-1.5 h-1.5 rounded-full transition-colors ${description.trim() ? 'bg-[#00dfc0] shadow-[0_0_6px_#00dfc0]' : 'bg-slate-700'}`} />
-            <span>03 DETAILS</span>
-          </div>
-        </div>
-
-        {/* ======================================================================= */}
-        {/* MAIN REPORTING WORKSPACE: Edge-to-Edge Glass on Mobile, Card on Desktop */}
-        {/* ======================================================================= */}
-        <div className="w-full bg-[#030915]/90 backdrop-blur-2xl border border-[#00dfc0]/40 sm:border-[#00dfc0]/50 rounded-2xl p-4 sm:p-7 shadow-[0_0_25px_rgba(0,223,192,0.18),0_20px_60px_rgba(0,0,0,0.9)] sm:shadow-[0_0_35px_rgba(0,223,192,0.22),0_20px_60px_rgba(0,0,0,0.9)] relative overflow-hidden">
+        {/* MAIN REPORTING MODAL */}
+        <div className="w-full rounded-[32px] bg-[#161618]/80 backdrop-blur-2xl border border-white/10 shadow-[0_25px_50px_rgba(0,0,0,0.85)] p-8 sm:p-10 relative overflow-hidden">
           
-          <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-5">
+          <form onSubmit={handleSubmit} className="space-y-6">
 
-            {/* SMART SCAN (AI) - COMPACT PHOTO CAPTURE WORKSPACE */}
-            <div className="space-y-1.5">
+            {/* SMART SCAN (AI) */}
+            <div className="space-y-2">
               <input
                 type="file"
                 ref={fileInputRef}
@@ -627,29 +506,25 @@ export default function ReportPage() {
                 capture="environment"
                 onChange={handleImageChange}
                 className="hidden"
-                aria-label="Upload or take incident photo"
               />
 
               {!selectedImage ? (
                 <div
                   onClick={() => fileInputRef.current?.click()}
-                  className="group relative cursor-pointer p-3 sm:p-3.5 rounded-xl border border-dashed border-teal-500/40 bg-teal-950/20 hover:bg-teal-950/35 hover:border-teal-400/70 transition flex items-center justify-between gap-3 shadow-[inset_0_1px_1px_rgba(255,255,255,0.05)] active:scale-[0.99]"
+                  className="group relative cursor-pointer p-4 rounded-2xl border border-dashed border-white/10 bg-white/5 hover:bg-white/10 transition flex flex-col sm:flex-row items-center justify-between gap-4"
                 >
-                  <div className="flex items-center gap-3 min-w-0">
-                    <div className="w-10 h-10 rounded-lg bg-teal-500/15 border border-teal-500/30 flex items-center justify-center text-[#00dfc0] group-hover:scale-105 transition-transform shrink-0 shadow-[0_0_10px_rgba(0,223,192,0.2)]">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-xl bg-white/10 border border-white/10 flex items-center justify-center text-white shrink-0 group-hover:scale-105 transition-transform">
                       <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
                       </svg>
                     </div>
-                    <div className="min-w-0">
+                    <div>
                       <div className="flex items-center gap-2">
-                        <span className="text-xs sm:text-sm font-bold text-white tracking-wide">SMART SCAN</span>
-                        <span className="text-[9px] font-mono font-bold tracking-wider px-1.5 py-0.5 rounded bg-teal-500/20 text-[#00dfc0] border border-teal-500/40">AI ASSISTED</span>
+                        <span className="text-sm font-bold text-white tracking-wide">SMART SCAN</span>
+                        <span className="text-[10px] font-mono font-bold tracking-wider px-1.5 py-0.5 rounded bg-white/10 text-white border border-white/10">AI</span>
                       </div>
-                      <p className="text-[11px] sm:text-xs text-slate-400 font-light mt-0.5 truncate">
-                        Take a photo and let AI identify the incident details
-                      </p>
                     </div>
                   </div>
                   <button
@@ -658,101 +533,56 @@ export default function ReportPage() {
                       e.stopPropagation();
                       fileInputRef.current?.click();
                     }}
-                    className="shrink-0 px-3 py-1.5 rounded-lg bg-teal-500/15 hover:bg-teal-500/25 border border-teal-500/40 text-teal-300 text-xs font-semibold transition"
+                    className="w-full sm:w-auto px-4 py-2 rounded-xl bg-[#00dfc0] hover:bg-[#00c9ad] text-slate-950 shadow-[0_0_15px_rgba(0,223,192,0.3)] text-xs font-bold uppercase transition"
                   >
                     Select Photo
                   </button>
                 </div>
               ) : (
-                <div className="relative p-3 rounded-xl bg-[#020713]/90 border border-teal-500/30 overflow-hidden space-y-2 shadow-[0_0_15px_rgba(0,0,0,0.5)]">
+                <div className="relative p-3 rounded-2xl bg-white/5 border border-white/10 overflow-hidden space-y-2">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
-                      <span className="w-2 h-2 rounded-full bg-[#00dfc0] shadow-[0_0_6px_#00dfc0]" />
-                      <span className="text-xs font-bold text-teal-300 font-mono tracking-wider uppercase">Photo Attached</span>
+                      <span className="w-2 h-2 rounded-full bg-white" />
+                      <span className="text-xs font-bold text-white font-mono uppercase">Photo Attached</span>
                     </div>
                     <div className="flex items-center gap-3">
-                      <button
-                        type="button"
-                        onClick={() => fileInputRef.current?.click()}
-                        className="text-xs text-teal-300 hover:text-white underline font-mono transition cursor-pointer"
-                      >
-                        Replace photo
+                      <button type="button" onClick={() => fileInputRef.current?.click()} className="text-xs text-zinc-300 hover:text-white underline font-mono">
+                        Replace
                       </button>
-                      <span className="text-slate-600">•</span>
-                      <button
-                        type="button"
-                        onClick={handleRemoveImage}
-                        className="text-xs text-rose-400 hover:text-rose-300 underline font-mono transition cursor-pointer"
-                      >
-                        Remove photo
+                      <button type="button" onClick={handleRemoveImage} className="text-xs text-zinc-500 hover:text-white underline font-mono">
+                        Remove
                       </button>
                     </div>
                   </div>
-                  <div className="relative max-h-36 sm:max-h-44 w-full rounded-lg overflow-hidden border border-white/10 bg-black/60 flex items-center justify-center">
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img
-                      src={selectedImage}
-                      alt="Incident preview"
-                      className="w-full h-36 sm:h-44 object-cover"
-                    />
+                  <div className="relative h-36 sm:h-44 w-full rounded-xl overflow-hidden bg-black flex items-center justify-center">
+                    <img src={selectedImage} alt="Incident preview" className="w-full h-full object-cover" />
                   </div>
                 </div>
               )}
             </div>
 
-            {/* 1. INCIDENT TYPE SELECTION: Compact Touch Rows on Mobile, 3 Cards on Desktop */}
-            <div className="space-y-2 sm:space-y-2.5">
-              <div className="flex items-center justify-between">
-                <span className="text-sm sm:text-base font-bold text-white tracking-wide">
-                  1. What type of incident?
-                </span>
-                <span className="text-xs font-mono text-slate-400">Select one</span>
-              </div>
-
-              {/* Responsive Selector Grid: 1 Col on Mobile, 3 Cols on Desktop */}
-              <div
-                role="radiogroup"
-                aria-label="Incident Type"
-                className="grid grid-cols-1 sm:grid-cols-3 gap-2 sm:gap-3"
-              >
+            {/* 1. INCIDENT TYPE */}
+            <div className="space-y-3">
+              <span className="text-sm font-bold text-white tracking-wide">1. What type of incident?</span>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 {INCIDENT_OPTIONS.map((opt) => {
                   const isSelected = type === opt.id;
                   return (
                     <button
                       key={opt.id}
                       type="button"
-                      role="radio"
-                      aria-checked={isSelected}
-                      tabIndex={0}
                       onClick={() => setType(opt.id)}
-                      className={`w-full min-h-[48px] sm:min-h-[105px] px-3.5 py-2.5 sm:p-4 rounded-xl border transition-all duration-200 cursor-pointer flex flex-row sm:flex-col items-center justify-between gap-3 sm:gap-2.5 relative group active:scale-[0.98] ${
+                      className={`w-full p-4 rounded-2xl border transition-all flex flex-col items-center gap-2 active:scale-[0.98] ${
                         isSelected
-                          ? `${opt.activeBg} ${opt.activeBorder} ${opt.activeRing} ring-1 ${opt.activeShadow} scale-[1.005] sm:scale-[1.01]`
-                          : 'bg-[#071022]/70 border-white/10 hover:border-white/20 hover:bg-[#0c1833] hover:-translate-y-0.5 hover:shadow-lg'
+                          ? `bg-white/10 border-white ring-1 ring-white/20 shadow-[0_0_15px_rgba(255,255,255,0.1)] scale-[1.01]`
+                          : 'bg-white/5 border-white/10 hover:border-white/20 hover:bg-white/10 text-zinc-400'
                       }`}
                     >
-                      {/* Left on mobile / Bottom-centered on desktop */}
-                      <div className="flex sm:flex-col items-center gap-3 sm:gap-2.5 flex-1 min-w-0 sm:w-full sm:order-2">
-                        {/* Prominent Crisp Icon */}
-                        <div className={`shrink-0 transition-transform duration-200 ${isSelected ? `${opt.accentText} scale-105 drop-shadow-[0_0_8px_currentColor]` : 'text-slate-300 group-hover:text-white'}`}>
-                          {opt.icon}
-                        </div>
-
-                        {/* Title */}
-                        <div className="text-xs sm:text-sm font-bold text-white leading-tight truncate sm:whitespace-normal text-left sm:text-center">
-                          {opt.title}
-                        </div>
+                      <div className={`transition-transform ${isSelected ? 'text-white scale-110' : ''}`}>
+                        {opt.icon}
                       </div>
-
-                      {/* Radio Indicator Dot: Right on mobile, Top-Right on desktop */}
-                      <div className="flex sm:w-full sm:justify-end shrink-0 sm:order-1">
-                        <div
-                          className={`w-4 h-4 sm:w-3.5 sm:h-3.5 rounded-full border flex items-center justify-center shrink-0 transition-colors ${
-                            isSelected ? opt.activeBorder : 'border-slate-600 group-hover:border-slate-500'
-                          }`}
-                        >
-                          {isSelected && <div className="w-2 h-2 sm:w-1.5 sm:h-1.5 rounded-full bg-current shadow-[0_0_4px_currentColor]" />}
-                        </div>
+                      <div className={`text-sm font-bold ${isSelected ? 'text-white' : 'text-zinc-400'}`}>
+                        {opt.title}
                       </div>
                     </button>
                   );
@@ -760,35 +590,20 @@ export default function ReportPage() {
               </div>
             </div>
 
-            {/* 2. LOCATION SECTION WITH INTERACTIVE DARK MAP */}
-            <div className="space-y-2 sm:space-y-2.5 pt-0.5">
+            {/* 2. LOCATION */}
+            <div className="space-y-3">
               <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <svg className="w-4 h-4 text-[#00dfc0]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-                  </svg>
-                  <span className="text-sm sm:text-base font-bold text-white tracking-wide">
-                    2. Location
-                  </span>
-                </div>
-
-                {/* Edit coordinates toggle */}
+                <span className="text-sm font-bold text-white tracking-wide">2. Location</span>
                 <button
                   type="button"
                   onClick={() => setShowManualCoords(!showManualCoords)}
-                  className="text-xs font-mono text-[#00dfc0] hover:text-[#00c9ad] transition underline cursor-pointer py-1 px-1 touch-manipulation"
+                  className="text-xs font-mono text-zinc-400 hover:text-white underline"
                 >
                   {showManualCoords ? 'Hide coordinates' : 'Edit coordinates'}
                 </button>
               </div>
 
-              <p className="text-xs text-slate-400 font-light -mt-1">
-                Tap map to place a pin, drag the marker, or use your GPS location.
-              </p>
-
-              {/* Interactive Location Selection Dark Map */}
-              <div className="relative w-full h-[200px] sm:h-[240px] rounded-xl overflow-hidden border border-teal-500/30 shadow-[0_0_20px_rgba(0,0,0,0.6)] bg-[#0a0f1d]">
+              <div className="relative w-full h-[240px] rounded-2xl overflow-hidden border border-white/10 bg-[#0a0f1d]">
                 <Map
                   ref={mapRef}
                   initialViewState={{
@@ -803,7 +618,6 @@ export default function ReportPage() {
                 >
                   <NavigationControl position="bottom-right" showCompass={false} />
 
-                  {/* Draggable Teal Pin Marker */}
                   {!isNaN(parsedLat) && !isNaN(parsedLng) && (
                     <Marker
                       longitude={parsedLng}
@@ -813,81 +627,36 @@ export default function ReportPage() {
                       anchor="bottom"
                     >
                       <div className="relative flex flex-col items-center cursor-grab active:cursor-grabbing group">
-                        {/* Animated radar ring around pin */}
-                        <div className="absolute -inset-1 rounded-full bg-[#00dfc0]/35 animate-ping pointer-events-none" />
-                        {/* Glowing pin head */}
-                        <div className="relative w-5 h-5 sm:w-6 sm:h-6 rounded-full bg-[#00dfc0] border-2 border-white shadow-[0_0_15px_#00dfc0] flex items-center justify-center transition-transform group-hover:scale-110">
-                          <div className="w-1.5 h-1.5 rounded-full bg-slate-950" />
+                        <div className="absolute -inset-1 rounded-full bg-white/35 animate-ping pointer-events-none" />
+                        <div className="relative w-6 h-6 rounded-full bg-white border-2 border-zinc-900 flex items-center justify-center transition-transform group-hover:scale-110">
+                          <div className="w-1.5 h-1.5 rounded-full bg-black" />
                         </div>
-                        {/* Pin pointer tip */}
-                        <div className="w-2 h-2 bg-[#00dfc0] rotate-45 -mt-1 border-r border-b border-teal-700" />
+                        <div className="w-2 h-2 bg-white rotate-45 -mt-1 border-r border-b border-zinc-900" />
                       </div>
                     </Marker>
                   )}
                 </Map>
 
-                {/* Map Overlay Top Bar: Status Readout & GPS Trigger */}
-                <div className="absolute top-2.5 left-2.5 right-2.5 flex items-center justify-between gap-2 pointer-events-none">
-                  {/* Left: Coordinate readout badge */}
-                  <div className="pointer-events-auto px-2.5 py-1.5 rounded-lg bg-[#020713]/85 backdrop-blur-md border border-teal-500/35 text-xs font-mono shadow-md flex items-center gap-1.5">
-                    <span className={`w-2 h-2 rounded-full ${!isNaN(parsedLat) && !isNaN(parsedLng) ? 'bg-[#00dfc0] shadow-[0_0_6px_#00dfc0]' : 'bg-slate-500'}`} />
-                    {!isNaN(parsedLat) && !isNaN(parsedLng) ? (
-                      <span className="text-teal-300 font-semibold truncate max-w-[150px] sm:max-w-none">
-                        {formattedLat}, {formattedLng}
-                      </span>
-                    ) : (
-                      <span className="text-slate-400">Click map to set pin</span>
-                    )}
-                  </div>
-
-                  {/* Right: Geolocation button */}
+                <div className="absolute top-3 right-3 pointer-events-none">
                   <button
                     type="button"
                     onClick={handleLocationDetect}
                     disabled={locationStatus === 'detecting'}
-                    className="pointer-events-auto px-3 py-1.5 rounded-lg bg-teal-950/85 backdrop-blur-md border border-teal-500/40 hover:border-[#00dfc0] text-teal-300 hover:text-white text-xs font-medium transition flex items-center gap-1.5 shadow-md cursor-pointer active:scale-95 disabled:opacity-50"
+                    className="pointer-events-auto w-10 h-10 rounded-xl bg-white hover:bg-zinc-200 text-black flex items-center justify-center transition shadow-lg active:scale-95 disabled:opacity-50"
                   >
-                    <svg className={`w-3.5 h-3.5 text-[#00dfc0] ${locationStatus === 'detecting' ? 'animate-spin' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <circle cx="12" cy="12" r="7" strokeWidth="1.8" />
+                    <svg className={`w-5 h-5 ${locationStatus === 'detecting' ? 'animate-spin' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <circle cx="12" cy="12" r="7" strokeWidth="2" />
                       <circle cx="12" cy="12" r="2" fill="currentColor" />
-                      <path strokeLinecap="round" strokeWidth={1.8} d="M12 2v3m0 14v3M2 12h3m14 0h3" />
+                      <path strokeLinecap="round" strokeWidth="2" d="M12 2v3m0 14v3M2 12h3m14 0h3" />
                     </svg>
-                    <span className="hidden sm:inline">
-                      {locationStatus === 'detecting' ? 'Locating...' : 'Use my current location'}
-                    </span>
-                    <span className="sm:hidden">
-                      {locationStatus === 'detecting' ? 'Locating...' : 'GPS'}
-                    </span>
                   </button>
-                </div>
-
-                {/* Map Overlay Bottom Hint */}
-                <div className="absolute bottom-2.5 left-2.5 pointer-events-none">
-                  <div className="px-2 py-1 rounded bg-[#020713]/85 backdrop-blur-sm border border-white/10 text-[10px] font-mono text-slate-400 hidden sm:block">
-                    Click map to place pin • Drag marker to adjust
-                  </div>
                 </div>
               </div>
 
-              {/* Inline Geolocation Error Alert */}
-              {locationStatus === 'error' && locationError && (
-                <div role="alert" aria-live="polite" className="p-3.5 rounded-xl bg-rose-950/40 border border-rose-500/40 text-rose-300 text-xs flex items-start gap-2">
-                  <svg className="w-4 h-4 text-rose-400 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-                  </svg>
-                  <div className="flex-1 leading-relaxed">
-                    {locationError}
-                  </div>
-                </div>
-              )}
-
-              {/* Expandable Manual Coordinates Inputs */}
               {showManualCoords && (
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 p-3 sm:p-3.5 rounded-xl bg-slate-900/80 border border-white/10">
+                <div className="grid grid-cols-2 gap-3 p-3 rounded-2xl bg-white/5 border border-white/10">
                   <div>
-                    <label htmlFor={latInputId} className="block text-[11px] font-mono uppercase text-slate-400 mb-1">
-                      Latitude
-                    </label>
+                    <label htmlFor={latInputId} className="block text-[11px] font-mono uppercase text-zinc-400 mb-1">Latitude</label>
                     <input
                       id={latInputId}
                       type="number"
@@ -902,15 +671,11 @@ export default function ReportPage() {
                           mapRef.current?.flyTo({ center: [lngVal, latVal], zoom: 14, duration: 500 });
                         }
                       }}
-                      placeholder="e.g. 26.9239"
-                      required
-                      className="w-full min-h-[44px] p-2.5 rounded-lg bg-slate-950 border border-white/10 text-white font-mono text-base sm:text-sm focus:outline-none focus:border-[#00dfc0] transition"
+                      className="w-full min-h-[44px] p-2.5 rounded-xl bg-black border border-white/10 text-white font-mono text-sm focus:outline-none focus:border-white transition"
                     />
                   </div>
                   <div>
-                    <label htmlFor={lngInputId} className="block text-[11px] font-mono uppercase text-slate-400 mb-1">
-                      Longitude
-                    </label>
+                    <label htmlFor={lngInputId} className="block text-[11px] font-mono uppercase text-zinc-400 mb-1">Longitude</label>
                     <input
                       id={lngInputId}
                       type="number"
@@ -925,119 +690,77 @@ export default function ReportPage() {
                           mapRef.current?.flyTo({ center: [lngVal, latVal], zoom: 14, duration: 500 });
                         }
                       }}
-                      placeholder="e.g. 75.8267"
-                      required
-                      className="w-full min-h-[44px] p-2.5 rounded-lg bg-slate-950 border border-white/10 text-white font-mono text-base sm:text-sm focus:outline-none focus:border-[#00dfc0] transition"
+                      className="w-full min-h-[44px] p-2.5 rounded-xl bg-black border border-white/10 text-white font-mono text-sm focus:outline-none focus:border-white transition"
                     />
                   </div>
                 </div>
               )}
             </div>
 
-            {/* 3. DETAILS: WHAT HAPPENED? WITH TAGS & 500-CHAR TEXTAREA */}
-            <div className="space-y-2.5 pt-0.5">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <svg className="w-4 h-4 text-[#00dfc0]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                  </svg>
-                  <label htmlFor={descInputId} className="text-sm sm:text-base font-bold text-white tracking-wide">
-                    3. What happened?
-                  </label>
-                </div>
-                <span
-                  className={`text-[11px] font-mono ${
-                    description.length > 450 ? 'text-amber-400 font-bold' : 'text-slate-500'
-                  }`}
+            {/* 3. DETAILS */}
+            <div className="space-y-3">
+              <span className="text-sm font-bold text-white tracking-wide">3. What happened?</span>
+              <div className="flex flex-col sm:flex-row gap-2">
+                <input
+                  id={tagInputId}
+                  type="text"
+                  value={tagInput}
+                  onChange={(e) => setTagInput(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault();
+                      handleAddTag();
+                    }
+                  }}
+                  placeholder="#tags (Press Enter)"
+                  className="flex-1 min-h-[44px] px-3 py-2 rounded-xl bg-white/5 border border-white/10 text-white text-sm focus:outline-none focus:border-white transition"
+                  disabled={tags.length >= 8}
+                />
+                <button
+                  type="button"
+                  onClick={handleAddTag}
+                  disabled={!tagInput.trim() || tags.length >= 8}
+                  className="px-4 py-2 rounded-xl bg-white/10 hover:bg-white/20 border border-white/10 text-white text-xs font-bold uppercase transition disabled:opacity-50"
                 >
-                  {description.length} / 500
-                </span>
+                  Add
+                </button>
               </div>
 
-              {/* Tags Input (Frontend-only state) */}
-              <div className="space-y-1.5">
-                <label htmlFor={tagInputId} className="block text-xs font-semibold text-slate-300">
-                  Incident Tags <span className="text-[11px] font-mono text-slate-500 font-normal">(Optional)</span>
-                </label>
-                <div className="flex items-center gap-2">
-                  <div className="relative flex-1">
-                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 font-mono text-xs">#</span>
-                    <input
-                      id={tagInputId}
-                      type="text"
-                      value={tagInput}
-                      onChange={(e) => setTagInput(e.target.value)}
-                      onKeyDown={(e) => {
-                        if (e.key === 'Enter') {
-                          e.preventDefault();
-                          handleAddTag();
-                        }
-                      }}
-                      placeholder="e.g. poor-lighting, crowd, obstruction (press Enter)"
-                      className="w-full pl-7 pr-3 py-2 rounded-lg bg-[#02050f]/90 border border-white/10 text-xs sm:text-sm text-white placeholder-slate-500 focus:outline-none focus:border-[#00dfc0] focus:ring-1 focus:ring-[#00dfc0]/40 transition"
-                    />
-                  </div>
-                  <button
-                    type="button"
-                    onClick={handleAddTag}
-                    className="px-3.5 py-2 rounded-lg border border-teal-500/40 bg-teal-950/40 hover:bg-teal-950/70 text-teal-300 text-xs font-semibold transition cursor-pointer hover:border-[#00dfc0]"
-                  >
-                    Add
-                  </button>
+              {tags.length > 0 && (
+                <div className="flex flex-wrap gap-2">
+                  {tags.map((tag) => (
+                    <span key={tag} className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded bg-white/10 text-zinc-300 text-[11px] font-mono border border-white/10">
+                      #{tag}
+                      <button type="button" onClick={() => handleRemoveTag(tag)} className="hover:text-white">&times;</button>
+                    </span>
+                  ))}
                 </div>
-
-                {/* Active Tag Chips */}
-                {tags.length > 0 && (
-                  <div className="flex flex-wrap gap-1.5 pt-0.5">
-                    {tags.map((tag) => (
-                      <span
-                        key={tag}
-                        className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-teal-950/70 border border-teal-500/40 text-teal-200 text-xs font-medium"
-                      >
-                        <span>#{tag}</span>
-                        <button
-                          type="button"
-                          onClick={() => handleRemoveTag(tag)}
-                          className="w-3.5 h-3.5 rounded-full hover:bg-teal-500/20 text-teal-400 hover:text-white flex items-center justify-center transition cursor-pointer font-bold leading-none"
-                          aria-label={`Remove tag ${tag}`}
-                        >
-                          ×
-                        </button>
-                      </span>
-                    ))}
-                  </div>
-                )}
-              </div>
+              )}
 
               <textarea
                 id={descInputId}
-                rows={3}
-                maxLength={500}
                 value={description}
-                onChange={(e) => setDescription(e.target.value)}
-                placeholder="Describe what you noticed so others know what to expect..."
+                onChange={(e) => setDescription(e.target.value.slice(0, 500))}
+                placeholder="Describe the incident..."
                 required
-                className="w-full p-3 sm:p-3.5 rounded-xl bg-[#02050f]/90 border border-white/10 text-base sm:text-sm text-white placeholder-slate-500 focus:outline-none focus:border-[#00dfc0] focus:ring-1 focus:ring-[#00dfc0]/40 transition resize-none leading-relaxed shadow-[inset_0_2px_4px_rgba(0,0,0,0.7)]"
+                rows={3}
+                className="w-full p-4 rounded-2xl bg-white/5 border border-white/10 text-white text-sm resize-none focus:outline-none focus:border-white transition"
               />
             </div>
 
-            {/* Inline Submission Network Error */}
             {submitError && (
-              <div role="alert" aria-live="polite" className="p-3.5 rounded-xl bg-rose-950/50 border border-rose-500/50 text-rose-200 text-xs flex items-start gap-2">
-                <svg className="w-4 h-4 text-rose-400 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-                </svg>
-                <div className="flex-1 leading-relaxed">{submitError}</div>
+              <div className="p-4 rounded-xl bg-white/5 border border-white/10 text-white text-sm text-center">
+                {submitError}
               </div>
             )}
 
-            {/* ACTION BUTTONS: Dominant Stacked Submit on Mobile, Horizontal on Desktop */}
-            <div className="pt-2 flex flex-col-reverse sm:flex-row sm:items-center sm:justify-between gap-2.5 sm:gap-4">
+            {/* ACTIONS */}
+            <div className="pt-2 flex flex-col sm:flex-row gap-3">
               <button
                 type="button"
                 onClick={() => router.back()}
                 disabled={isSubmitting}
-                className="w-full sm:w-auto min-h-[44px] py-2.5 px-6 rounded-xl border border-white/10 hover:border-white/20 active:bg-white/[0.08] hover:bg-white/[0.04] text-slate-300 hover:text-white font-semibold text-xs sm:text-sm transition cursor-pointer text-center"
+                className="w-full py-4 rounded-xl bg-white/10 hover:bg-white/15 border border-white/10 text-white font-semibold text-sm transition active:scale-[0.98]"
               >
                 Cancel
               </button>
@@ -1045,22 +768,14 @@ export default function ReportPage() {
               <button
                 type="submit"
                 disabled={isSubmitting}
-                className="w-full sm:flex-1 min-h-[48px] py-3 sm:py-2.5 px-6 rounded-xl font-bold text-xs sm:text-sm tracking-wider uppercase transition-all shadow-md flex items-center justify-center gap-2 cursor-pointer bg-[#00dfc0] hover:bg-[#00c9ad] active:scale-[0.98] text-slate-950 shadow-[0_0_20px_rgba(0,223,192,0.35)] hover:shadow-[0_0_30px_rgba(0,223,192,0.5)] disabled:opacity-60 disabled:cursor-not-allowed"
+                className="w-full py-4 rounded-xl bg-[#00dfc0] hover:bg-[#00c9ad] text-slate-950 font-bold text-sm tracking-wide shadow-[0_0_15px_rgba(0,223,192,0.3)] hover:opacity-90 active:scale-[0.98] transition"
               >
-                {isSubmitting ? (
-                  <span>Submitting...</span>
-                ) : (
-                  <>
-                    <span>SUBMIT REPORT</span>
-                    <span className="font-mono text-sm">→</span>
-                  </>
-                )}
+                {isSubmitting ? 'Submitting...' : 'SUBMIT REPORT'}
               </button>
             </div>
 
           </form>
         </div>
-
       </div>
     </main>
   );

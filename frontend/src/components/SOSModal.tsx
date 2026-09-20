@@ -99,60 +99,67 @@ export default function SOSModal({ isOpen, onClose }: SOSModalProps) {
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4">
-      <div className="bg-white dark:bg-slate-900 rounded-2xl w-full max-w-md overflow-hidden shadow-2xl border border-danger/30">
-        <div className="bg-danger p-6 text-white text-center">
-          <svg xmlns="http://www.w3.org/2000/svg" className="h-16 w-16 mx-auto mb-4 animate-pulse" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-          </svg>
-          <h2 className="text-3xl font-bold">EMERGENCY SOS</h2>
-        </div>
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#050914]/90 backdrop-blur-md p-4">
+      <div className="w-full max-w-lg rounded-2xl border border-rose-500/30 bg-gradient-to-b from-rose-950/25 via-slate-950 to-slate-950 p-6 sm:p-8 shadow-2xl relative overflow-hidden flex flex-col items-center">
         
-        <div className="p-8 text-center">
+        <div className="text-xs font-mono text-rose-400 tracking-widest uppercase mb-4 flex items-center justify-between w-full">
+          <span>EMERGENCY SOS</span>
+          <span className="text-slate-400">{countdown}.00 SEC GRACE</span>
+        </div>
+
+        {/* Circular Countdown Dial with Pulsing Halos */}
+        <div className="my-6 relative flex items-center justify-center">
+          <div className="w-40 h-40 sm:w-48 sm:h-48 rounded-full border-2 border-rose-500/40 flex flex-col items-center justify-center relative shadow-[0_0_40px_rgba(225,29,72,0.25)]">
+            <div className="absolute inset-0 rounded-full border border-rose-500/50 animate-ping opacity-20" />
+            <div className="text-5xl sm:text-6xl font-black font-mono text-rose-500 drop-shadow-[0_0_20px_rgba(225,29,72,0.8)] tabular-nums">
+              {countdown.toFixed(1)}
+            </div>
+            <div className="text-[9px] font-mono text-slate-400 uppercase tracking-widest mt-1">
+              SECONDS
+            </div>
+          </div>
+        </div>
+
+        {/* Action Buttons */}
+        <div className="mt-8 w-full flex flex-col items-center gap-3">
           {!isAlerting ? (
-            <>
-              <p className="text-xl mb-6 font-medium">Alerting trusted contacts in:</p>
-              <div className="text-6xl font-black text-danger mb-8">{countdown}</div>
-              
-              <div className="flex gap-4">
-                <button 
-                  onClick={onClose}
-                  className="flex-1 py-3 px-4 rounded-lg font-bold border-2 border-slate-300 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 transition"
-                >
-                  CANCEL
-                </button>
-                <button 
-                  onClick={triggerSOS}
-                  className="flex-1 py-3 px-4 rounded-lg font-bold bg-danger text-white hover:bg-danger-hover transition"
-                >
-                  SEND NOW
-                </button>
-              </div>
-            </>
+            <div className="flex flex-col sm:flex-row gap-3 w-full justify-center">
+              <button 
+                onClick={onClose}
+                className="w-full sm:w-auto px-8 py-3.5 rounded-full font-bold text-sm tracking-wide border border-slate-700/80 text-slate-300 hover:bg-slate-900 transition-all cursor-pointer"
+              >
+                CANCEL
+              </button>
+              <button 
+                onClick={triggerSOS}
+                className="w-full sm:w-auto bg-rose-600 hover:bg-rose-500 text-white px-8 py-3.5 rounded-full font-bold text-sm tracking-wide shadow-[0_0_25px_rgba(225,29,72,0.4)] transition-all flex items-center justify-center gap-2.5 cursor-pointer"
+              >
+                <span className="w-2 h-2 rounded-full bg-white animate-ping" />
+                <span>SEND NOW</span>
+              </button>
+            </div>
           ) : (
-            <>
+            <div className="text-center w-full min-h-[60px] flex flex-col items-center justify-center">
               {error ? (
                 <>
-                  <div className="text-danger mb-4">
-                    <XCircle className="h-20 w-20 mx-auto" />
-                  </div>
-                  <h3 className="text-2xl font-bold mb-2 text-danger">SOS Failed</h3>
-                  <p className="opacity-80 mb-8">{error}</p>
-                  
+                  <div className="text-rose-500 mb-2 font-bold text-lg">SOS Failed</div>
+                  <div className="text-slate-400 text-xs mb-6 max-w-xs">{error}</div>
                   <button 
                     onClick={onClose}
-                    className="w-full py-3 px-4 rounded-lg font-bold border-2 border-slate-300 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 transition"
+                    className="w-full sm:w-auto px-8 py-3.5 rounded-full font-bold text-sm border border-slate-700/80 text-slate-300 hover:bg-slate-900 transition-all cursor-pointer"
                   >
                     Close Window
                   </button>
                 </>
               ) : (
-                <>
-                  <div className="animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-danger mx-auto mb-6"></div>
-                  <p className="text-lg font-medium">Acquiring live location and preparing SMS...</p>
-                </>
+                <div className="flex flex-col items-center gap-3">
+                  <div className="w-6 h-6 border-2 border-rose-500 border-t-transparent rounded-full animate-spin" />
+                  <div className="text-rose-400 font-mono text-xs uppercase tracking-widest animate-pulse">
+                    Broadcasting Alert...
+                  </div>
+                </div>
               )}
-            </>
+            </div>
           )}
         </div>
       </div>
