@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 
 export default function ReportPage() {
-  const [type, setType] = useState('incident');
+  const [category, setCategory] = useState('General');
   const [description, setDescription] = useState('');
   const [latitude, setLatitude] = useState('');
   const [longitude, setLongitude] = useState('');
@@ -26,12 +26,13 @@ export default function ReportPage() {
     setIsSubmitting(true);
     
     try {
-      const res = await fetch('http://localhost:5000/api/v1/pins', {
+      // POST to the new Incidents endpoint
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'}/api/v1/incidents`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          userId: 'test-user-id', // Would come from Auth in production
-          type,
+          reportedBy: 'authenticated-user-id', // Would come from AuthContext
+          category,
           description,
           latitude: parseFloat(latitude),
           longitude: parseFloat(longitude)
@@ -52,45 +53,44 @@ export default function ReportPage() {
   };
 
   return (
-    <main className="flex-grow flex items-center justify-center p-8 bg-background text-foreground">
-      <div className="w-full max-w-2xl bg-white dark:bg-slate-800 p-8 rounded-xl shadow-lg border border-slate-200 dark:border-slate-700">
-        <h1 className="text-3xl font-bold mb-6 text-primary dark:text-white">Report an Incident</h1>
+    <main className="flex-grow flex items-center justify-center p-8 bg-[#0a0a0a] text-white font-sans min-h-screen">
+      <div className="w-full max-w-2xl bg-[#1c1c1c] p-8 rounded-3xl shadow-2xl border border-white/10">
+        <h1 className="text-3xl font-bold mb-8 flex items-center gap-3">
+          <svg className="w-8 h-8 text-red-500" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd"/></svg>
+          Report an Incident
+        </h1>
         
         <form onSubmit={handleSubmit} className="space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div>
-              <label className="block text-sm font-medium mb-1 opacity-80">Incident Type</label>
-              <select 
-                className="w-full p-3 rounded-md border border-slate-300 dark:border-slate-600 bg-transparent"
-                value={type}
-                onChange={(e) => setType(e.target.value)}
-              >
-                <option value="incident">General Incident</option>
-                <option value="danger">Danger Zone</option>
-                <option value="safe">Safe Area / Police Presence</option>
-                <option value="warning">Hazard / Warning</option>
-              </select>
+            <div className="md:col-span-2">
+              <label className="block text-sm font-medium mb-2 text-white/70">Category</label>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                {['Women Safety', 'Child Safety', 'Theft', 'Poor Lighting', 'Road Hazard', 'General'].map(cat => (
+                  <label key={cat} className={`cursor-pointer flex flex-col items-center justify-center p-4 rounded-xl border-2 transition-all ${category === cat ? 'bg-blue-600/20 border-blue-500 text-blue-400' : 'bg-white/5 border-transparent hover:bg-white/10 text-white/60'}`}>
+                    <input type="radio" name="category" value={cat} checked={category === cat} onChange={() => setCategory(cat)} className="sr-only" />
+                    <span className="text-sm font-semibold text-center">{cat}</span>
+                  </label>
+                ))}
+              </div>
             </div>
             
-            <div className="flex flex-col justify-end">
+            <div className="md:col-span-2 flex flex-col items-center justify-center py-4 border border-dashed border-white/20 rounded-xl bg-white/5">
+              <p className="text-sm text-white/50 mb-3">Where did this happen?</p>
               <button 
                 type="button" 
                 onClick={handleLocationDetect}
-                className="w-full bg-slate-200 dark:bg-slate-700 hover:bg-slate-300 dark:hover:bg-slate-600 p-3 rounded-md font-medium transition flex items-center justify-center gap-2"
+                className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-full font-medium transition flex items-center justify-center gap-2 shadow-lg"
               >
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-                </svg>
-                Use Current Location
+                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
+                Detect Current Location
               </button>
             </div>
             
             <div>
-              <label className="block text-sm font-medium mb-1 opacity-80">Latitude</label>
+              <label className="block text-sm font-medium mb-1 text-white/70">Latitude</label>
               <input 
                 type="number" step="any"
-                className="w-full p-3 rounded-md border border-slate-300 dark:border-slate-600 bg-transparent"
+                className="w-full p-4 rounded-xl border border-white/10 bg-white/5 outline-none focus:border-blue-500 transition"
                 value={latitude}
                 onChange={(e) => setLatitude(e.target.value)}
                 required
@@ -98,10 +98,10 @@ export default function ReportPage() {
             </div>
             
             <div>
-              <label className="block text-sm font-medium mb-1 opacity-80">Longitude</label>
+              <label className="block text-sm font-medium mb-1 text-white/70">Longitude</label>
               <input 
                 type="number" step="any"
-                className="w-full p-3 rounded-md border border-slate-300 dark:border-slate-600 bg-transparent"
+                className="w-full p-4 rounded-xl border border-white/10 bg-white/5 outline-none focus:border-blue-500 transition"
                 value={longitude}
                 onChange={(e) => setLongitude(e.target.value)}
                 required
@@ -110,10 +110,10 @@ export default function ReportPage() {
           </div>
 
           <div>
-            <label className="block text-sm font-medium mb-1 opacity-80">Description</label>
+            <label className="block text-sm font-medium mb-1 text-white/70">Description</label>
             <textarea 
               rows={4}
-              className="w-full p-3 rounded-md border border-slate-300 dark:border-slate-600 bg-transparent"
+              className="w-full p-4 rounded-xl border border-white/10 bg-white/5 outline-none focus:border-blue-500 transition resize-none"
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               placeholder="Provide details about the situation..."
@@ -121,18 +121,18 @@ export default function ReportPage() {
             ></textarea>
           </div>
           
-          <div className="pt-4 flex gap-4">
+          <div className="pt-6 flex gap-4">
             <button 
               type="button" 
               onClick={() => router.back()}
-              className="px-6 py-3 rounded-md border border-slate-300 dark:border-slate-600 font-medium hover:bg-slate-100 dark:hover:bg-slate-700 transition"
+              className="px-8 py-4 rounded-xl border border-white/10 font-bold hover:bg-white/10 transition"
             >
               Cancel
             </button>
             <button 
               type="submit" 
               disabled={isSubmitting}
-              className="flex-grow bg-secondary hover:bg-secondary-hover text-white py-3 rounded-md font-semibold transition disabled:opacity-70"
+              className="flex-grow bg-red-600 hover:bg-red-700 text-white py-4 rounded-xl font-bold transition shadow-[0_0_20px_rgba(220,38,38,0.3)] disabled:opacity-50"
             >
               {isSubmitting ? 'Submitting...' : 'Submit Report'}
             </button>

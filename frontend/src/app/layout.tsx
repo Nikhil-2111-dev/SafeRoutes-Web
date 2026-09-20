@@ -4,6 +4,7 @@ import "./globals.css";
 import ConfigureAmplifyClientSide from '@/components/ConfigureAmplifyClientSide';
 import Navigation from "@/components/Navigation";
 import { AuthProvider } from "@/context/AuthContext";
+import GoogleMapsProvider from "@/components/GoogleMapsProvider";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -29,8 +30,10 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       <body className="min-h-full flex flex-col">
         <ConfigureAmplifyClientSide />
         <AuthProvider>
-          <Navigation />
-          {children}
+          <GoogleMapsProvider>
+            <Navigation />
+            {children}
+          </GoogleMapsProvider>
         </AuthProvider>
       </body>
     </html>

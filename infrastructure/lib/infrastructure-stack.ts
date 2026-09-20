@@ -57,6 +57,15 @@ export class InfrastructureStack extends cdk.Stack {
       billingMode: dynamodb.BillingMode.PAY_PER_REQUEST,
       removalPolicy: cdk.RemovalPolicy.DESTROY,
     });
+    
+    // New Table for Hybrid Community Safety System
+    const incidentsTable = new dynamodb.Table(this, 'SafeRouteIncidents', {
+      tableName: 'SafeRouteIncidents',
+      partitionKey: { name: 'incidentId', type: dynamodb.AttributeType.STRING },
+      billingMode: dynamodb.BillingMode.PAY_PER_REQUEST,
+      removalPolicy: cdk.RemovalPolicy.DESTROY,
+    });
+
     const alertsTable = new dynamodb.Table(this, 'SafeRouteAlerts', {
       tableName: 'SafeRouteAlerts',
       partitionKey: { name: 'alertId', type: dynamodb.AttributeType.STRING },
