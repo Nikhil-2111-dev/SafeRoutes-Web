@@ -71,8 +71,8 @@ router.post('/', requireAuth, async (req, res) => {
 
     await docClient.send(command);
   } catch (error: any) {
-    if (error.name === 'CredentialsProviderError' || error.name === 'UnrecognizedClientException') {
-      console.warn('AWS Credentials missing, using in-memory fallback for POST /incidents');
+    if (error.name === 'ResourceNotFoundException' || error.name === 'AccessDeniedException' || error.name === 'CredentialsProviderError' || error.name === 'UnrecognizedClientException') {
+      console.warn('AWS Credentials missing or table not found, using in-memory fallback for POST /incidents');
       fallbackIncidents.push(incident);
     } else {
       console.error('Error creating incident:', error);
