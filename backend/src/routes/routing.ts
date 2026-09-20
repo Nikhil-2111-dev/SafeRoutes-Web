@@ -58,7 +58,7 @@ function decodePolyline(encoded: string): number[][] {
   return poly;
 }
 
-// Fetch active incidents — DynamoDB with in-memory fallback for dev without AWS creds
+// Fetch active incidents — DynamoDB with in-memory fallback for dev without AWS creds or missing table
 async function fetchActiveIncidents(): Promise<any[]> {
   try {
     const command = new ScanCommand({
@@ -70,10 +70,8 @@ async function fetchActiveIncidents(): Promise<any[]> {
     const response = await docClient.send(command);
     return response.Items || [];
   } catch (err: any) {
-    if (err.name === 'CredentialsProviderError' || err.name === 'UnrecognizedClientException') {
-      return fallbackIncidents.filter((i: any) => i.status === 'active');
-    }
-    throw err;
+    console.warn('DynamoDB scan failed, using fallback incidents:', err.message);
+    return fallbackIncidents.filter((i: any) => i.status === 'active');
   }
 }
 

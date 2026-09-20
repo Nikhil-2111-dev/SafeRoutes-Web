@@ -26,6 +26,7 @@ async function searchWithPhoton(query: string, biasPosition?: [number, number]):
     const data = await res.json();
 
     return (data.features || [])
+      .filter((f: any) => !f.properties?.countrycode || f.properties.countrycode === 'IN' || f.properties.country === 'India')
       .map((f: any) => {
         const p = f.properties;
         const name = p.name || p.street || p.city;

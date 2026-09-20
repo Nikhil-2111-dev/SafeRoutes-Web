@@ -2,6 +2,7 @@
 
 import { useState, useId, useRef, useCallback, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import { fetchAuthSession } from 'aws-amplify/auth';
 import Map, { Marker, NavigationControl, MapRef } from 'react-map-gl/maplibre';
 import 'maplibre-gl/dist/maplibre-gl.css';
 
@@ -90,6 +91,17 @@ export default function ReportPage() {
   const [submitError, setSubmitError] = useState<string | null>(null);
 
   const router = useRouter();
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
+
+  const getAuthToken = async () => {
+    try {
+      const session = await fetchAuthSession();
+      return session.tokens?.idToken?.toString();
+    } catch (e) {
+      console.warn("Could not get auth session for request");
+      return null;
+    }
+  };
 
   const latInputId = useId();
   const lngInputId = useId();
@@ -153,6 +165,45 @@ export default function ReportPage() {
       const previewUrl = URL.createObjectURL(file);
       setSelectedImage(previewUrl);
       setImageFile(file);
+
+      setIsAnalyzing(true);
+      const reader = new FileReader();
+      reader.onloadend = async () => {
+        const base64data = reader.result as string;
+        try {
+          const token = await getAuthToken();
+          const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'}/api/v1/pins/analyze-image`, {
+            method: 'POST',
+            headers: { 
+              'Content-Type': 'application/json',
+              ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+            },
+            body: JSON.stringify({ 
+              imageBase64: base64data,
+              mimeType: file.type 
+            })
+          });
+
+          if (res.ok) {
+            const data = await res.json();
+            if (data.tags) {
+              setTags(prev => {
+                const newTags = [...prev];
+                data.tags.forEach((tag: string) => {
+                  const clean = tag.toLowerCase().replace(/^#+/, '');
+                  if (!newTags.includes(clean)) newTags.push(clean);
+                });
+                return newTags.slice(0, 8);
+              });
+            }
+          }
+        } catch (err) {
+          console.error("AI Analysis failed", err);
+        } finally {
+          setIsAnalyzing(false);
+        }
+      };
+      reader.readAsDataURL(file);
     }
   };
 

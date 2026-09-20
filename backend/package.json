@@ -5,7 +5,7 @@
   "main": "dist/server.js",
   "scripts": {
     "start": "node dist/server.js",
-    "dev": "ts-node-dev --respawn --transpile-only src/server.ts",
+    "dev": "nodemon --watch src --ext ts,json --exec \"ts-node --transpile-only\" src/server.ts",
     "build": "tsc"
   },
   "dependencies": {
@@ -14,10 +14,12 @@
     "@aws-sdk/client-location": "^3.0.0",
     "@aws-sdk/client-sns": "^3.1136.0",
     "@aws-sdk/lib-dynamodb": "^3.0.0",
+    "@google/genai": "^2.23.0",
     "aws-jwt-verify": "^5.2.1",
     "cors": "^2.8.5",
     "dotenv": "^16.3.1",
     "express": "^4.18.2",
+    "nodemon": "^3.1.14",
     "haversine": "^1.1.1",
     "libphonenumber-js": "^1.13.13",
     "multer": "^2.4.0",
