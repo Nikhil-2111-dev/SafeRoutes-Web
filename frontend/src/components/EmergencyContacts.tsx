@@ -127,25 +127,25 @@ export default function EmergencyContacts() {
 
   if (loading) {
     return (
-      <div className="bg-[#0B1221] rounded-2xl p-8 border border-[#00F2FE]/20 shadow-[0_0_30px_rgba(0,242,254,0.05)] text-[#00F2FE] flex items-center justify-center min-h-[300px]">
-        <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-[#00F2FE]"></div>
+      <div className="w-full rounded-[32px] bg-[#161618]/80 backdrop-blur-2xl border border-white/10 shadow-[0_25px_50px_rgba(0,0,0,0.85)] p-8 sm:p-10 flex items-center justify-center min-h-[300px]">
+        <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-white"></div>
       </div>
     );
   }
 
   return (
-    <div className="bg-[#050B14]/80 lg:bg-[#050B14] backdrop-blur-2xl lg:backdrop-blur-none rounded-3xl p-6 sm:p-10 border-2 border-[#00F2FE]/50 lg:border-[#00F2FE]/30 shadow-[0_0_40px_rgba(0,242,254,0.15),inset_0_0_30px_rgba(0,242,254,0.05)] relative overflow-hidden w-full">
+    <div className="w-full rounded-[32px] bg-[#161618]/80 backdrop-blur-2xl border border-white/10 shadow-[0_25px_50px_rgba(0,0,0,0.85)] p-8 sm:p-10 relative overflow-hidden">
       <div className="relative z-10">
-        <div className="flex items-center justify-between mb-8 pb-4 border-b border-[#00F2FE]/20">
+        <div className="flex flex-row items-center justify-between mb-6 sm:mb-8 pb-4 border-b border-white/10 gap-4">
           <div>
-            <h2 className="text-[#00F2FE] font-mono text-xs uppercase tracking-[0.2em] mb-2 flex items-center gap-2">
-              <ShieldAlert className="w-4 h-4" /> EMERGENCY // CONTACTS
+            <h2 className="text-zinc-400 font-mono text-[10px] sm:text-xs uppercase tracking-[0.2em] mb-1.5 sm:mb-2 flex items-center gap-1.5 sm:gap-2">
+              <ShieldAlert className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-white" /> CONTACTS
             </h2>
-            <h3 className="text-white text-2xl font-bold tracking-tight">TRUSTED NETWORK</h3>
+            <h3 className="text-white text-xl sm:text-2xl font-extrabold tracking-tight uppercase">TRUSTED NETWORK</h3>
           </div>
-          <div className="text-right">
-            <span className="text-[#00F2FE] font-mono text-xl">{contacts.length}</span>
-            <span className="text-slate-500 font-mono text-sm"> / 5</span>
+          <div className="text-right shrink-0">
+            <span className="text-zinc-300 font-mono text-lg sm:text-xl font-bold">{contacts.length}</span>
+            <span className="text-zinc-600 font-mono text-xs sm:text-sm"> / 5</span>
           </div>
         </div>
 
@@ -160,31 +160,31 @@ export default function EmergencyContacts() {
             {contacts.length > 0 ? (
               <div className="space-y-4 mb-10">
                 {contacts.map((c, i) => (
-                  <div key={c.id} className="group flex justify-between items-center p-4 sm:p-5 bg-[#0A101C] rounded-2xl border border-slate-800 hover:border-[#00F2FE]/30 hover:bg-[#0C1524] transition-all duration-300">
-                    <div className="flex items-center gap-4 sm:gap-5">
-                      <div className="h-10 w-10 sm:h-12 sm:w-12 bg-[#00F2FE]/5 rounded-xl border border-[#00F2FE]/10 flex items-center justify-center text-[#00F2FE] group-hover:bg-[#00F2FE]/10 group-hover:border-[#00F2FE]/30 group-hover:shadow-[0_0_15px_rgba(0,242,254,0.2)] transition-all">
-                        <span className="font-mono text-xs font-bold">{String(i + 1).padStart(2, '0')}</span>
+                  <div key={c.id} className="group flex justify-between items-center p-3.5 sm:p-5 bg-white/5 rounded-xl sm:rounded-2xl border border-white/10 hover:border-white/20 hover:bg-white/10 transition-all duration-200">
+                    <div className="flex items-center gap-3 sm:gap-4 min-w-0">
+                      <div className="h-10 w-10 sm:h-12 sm:w-12 shrink-0 bg-white/5 rounded-lg sm:rounded-xl border border-white/10 flex items-center justify-center text-zinc-400 group-hover:text-white transition-all">
+                        <span className="font-mono text-[10px] sm:text-xs font-bold">{String(i + 1).padStart(2, '0')}</span>
                       </div>
-                      <div>
-                        <p className="font-bold text-slate-200 text-base sm:text-lg tracking-wide mb-0.5 sm:mb-1 group-hover:text-white transition-colors">
+                      <div className="min-w-0">
+                        <p className="font-bold text-white text-sm sm:text-base tracking-wide mb-0.5 sm:mb-1 truncate">
                           {c.name}
                         </p>
-                        <p className="text-xs sm:text-sm text-[#00F2FE] font-mono flex items-center gap-2 opacity-70 group-hover:opacity-100 transition-opacity">
-                          <Phone className="w-3 h-3" /> {typeof c.phoneNumber === 'object' ? (c.phoneNumber as any)?.formatted || JSON.stringify(c.phoneNumber) : c.phoneNumber}
+                        <p className="text-xs sm:text-sm text-zinc-400 font-mono flex items-center gap-1.5 sm:gap-2">
+                          <Phone className="w-3 h-3 text-zinc-600" /> {typeof c.phoneNumber === 'object' ? (c.phoneNumber as any)?.formatted || JSON.stringify(c.phoneNumber) : c.phoneNumber}
                         </p>
                       </div>
                     </div>
-                    <div className="flex gap-3 opacity-50 group-hover:opacity-100 transition-opacity">
+                    <div className="flex gap-1.5 sm:gap-2 shrink-0 ml-2">
                       <button 
                         onClick={() => openEdit(c)}
-                        className="p-2 text-[#00F2FE] hover:bg-[#00F2FE]/10 rounded-lg transition-colors border border-transparent hover:border-[#00F2FE]/30"
+                        className="p-2 sm:p-2.5 text-zinc-400 hover:text-white hover:bg-white/10 rounded-lg transition-colors cursor-pointer"
                         title="Edit Contact"
                       >
                         <Edit2 className="w-4 h-4" />
                       </button>
                       <button 
                         onClick={() => handleDelete(c.id)}
-                        className="p-2 text-[#FF2A5F] hover:bg-[#FF2A5F]/10 rounded-lg transition-colors border border-transparent hover:border-[#FF2A5F]/30"
+                        className="p-2 sm:p-2.5 text-zinc-400 hover:text-white hover:bg-white/10 rounded-lg transition-colors cursor-pointer"
                         title="Remove Contact"
                       >
                         <Trash2 className="w-4 h-4" />
@@ -194,72 +194,72 @@ export default function EmergencyContacts() {
                 ))}
               </div>
             ) : (
-              <div className="text-center p-12 bg-[#050B14] rounded-xl border border-dashed border-slate-800 mb-8 text-slate-400">
-                <ShieldAlert className="w-12 h-12 mx-auto mb-4 text-slate-600 opacity-50" />
-                <p className="font-medium text-white mb-2 text-lg">No emergency contacts configured.</p>
-                <p className="text-sm opacity-70">Add a trusted contact to activate the SOS system.</p>
+              <div className="text-center p-8 sm:p-12 bg-white/5 rounded-xl sm:rounded-2xl border border-dashed border-white/10 mb-6 sm:mb-8 text-zinc-400">
+                <ShieldAlert className="w-10 h-10 sm:w-12 sm:h-12 mx-auto mb-3 sm:mb-4 text-zinc-500" />
+                <p className="font-bold text-white mb-1.5 sm:mb-2 text-base sm:text-lg">No emergency contacts configured.</p>
+                <p className="text-xs sm:text-sm text-zinc-400 max-w-xs mx-auto">Add a trusted contact to activate the SOS system.</p>
               </div>
             )}
 
             {contacts.length < 5 && (
               <button 
                 onClick={openAdd}
-                className="w-full py-4 sm:py-5 flex items-center justify-center gap-3 bg-transparent border-2 border-[#00F2FE]/20 text-[#00F2FE] rounded-2xl hover:bg-[#00F2FE]/5 hover:border-[#00F2FE]/60 transition-all font-bold tracking-[0.2em] uppercase text-xs sm:text-sm hover:shadow-[0_0_30px_rgba(0,242,254,0.1)]"
+                className="w-full min-h-[56px] py-4 flex items-center justify-center gap-2 sm:gap-3 bg-[#00dfc0] hover:bg-[#00c9ad] text-slate-950 shadow-[0_0_15px_rgba(0,223,192,0.3)] rounded-xl sm:rounded-2xl transition-all font-bold tracking-wider uppercase text-xs sm:text-sm active:scale-[0.98] cursor-pointer"
               >
-                <Plus className="w-5 h-5" /> REGISTER NEW CONTACT
+                <Plus className="w-4 h-4 sm:w-5 sm:h-5" /> REGISTER NEW CONTACT
               </button>
             )}
           </>
         ) : (
-          <div className="p-6 bg-[#050B14] rounded-xl border border-[#00F2FE]/30 shadow-[0_0_20px_rgba(0,242,254,0.1)]">
-            <div className="flex justify-between items-center mb-6 border-b border-slate-800 pb-4">
-              <h3 className="font-mono text-sm tracking-widest text-[#00F2FE] uppercase">{editingId ? 'EDIT // CONTACT' : 'NEW // CONTACT'}</h3>
-              <button onClick={() => setShowForm(false)} className="text-slate-500 hover:text-white transition-colors">
+          <div className="p-5 sm:p-6 bg-white/5 rounded-xl sm:rounded-2xl border border-white/10 shadow-xl">
+            <div className="flex justify-between items-center mb-5 sm:mb-6 border-b border-white/10 pb-3 sm:pb-4">
+              <h3 className="font-mono text-xs sm:text-sm font-bold tracking-widest text-zinc-300 uppercase">{editingId ? 'EDIT CONTACT' : 'NEW CONTACT'}</h3>
+              <button type="button" onClick={() => setShowForm(false)} className="text-zinc-500 hover:text-white transition-colors cursor-pointer p-1">
                 <X className="w-5 h-5" />
               </button>
             </div>
             
-            <form onSubmit={handleSaveContact} className="space-y-5">
+            <form onSubmit={handleSaveContact} className="space-y-4 sm:space-y-5">
               <div>
-                <label className="block text-xs font-mono tracking-wider text-slate-400 mb-2 uppercase">Contact Name</label>
+                <label className="block text-[10px] sm:text-xs font-mono font-bold tracking-wider text-zinc-400 mb-1.5 sm:mb-2 uppercase">Contact Name</label>
                 <input
                   type="text"
                   required
                   value={formData.name}
                   onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  className="w-full p-4 rounded-lg border border-slate-700 bg-[#0B1221] text-white focus:border-[#00F2FE] focus:ring-1 focus:ring-[#00F2FE] outline-none transition-all placeholder-slate-700 font-medium tracking-wide"
-                  placeholder="JOHN DOE"
+                  className="w-full min-h-[48px] sm:min-h-[52px] p-3 sm:p-4 rounded-xl border border-white/10 bg-black text-white focus:border-white focus:ring-1 focus:ring-white outline-none transition-all placeholder-zinc-600 text-sm sm:text-base font-medium"
+                  placeholder="Enter your name"
                 />
               </div>
               <div>
-                <label className="block text-xs font-mono tracking-wider text-slate-400 mb-2 uppercase">Phone Number</label>
+                <label className="block text-[10px] sm:text-xs font-mono font-bold tracking-wider text-zinc-400 mb-1.5 sm:mb-2 uppercase">Phone Number</label>
                 <input
                   type="tel"
                   required
                   value={formData.phoneNumber}
                   onChange={(e) => setFormData({ ...formData, phoneNumber: e.target.value })}
-                  className="w-full p-4 rounded-lg border border-slate-700 bg-[#0B1221] text-white focus:border-[#00F2FE] focus:ring-1 focus:ring-[#00F2FE] outline-none transition-all placeholder-slate-700 font-mono tracking-wider"
-                  placeholder="+15551234567"
+                  className="w-full min-h-[48px] sm:min-h-[52px] p-3 sm:p-4 rounded-xl border border-white/10 bg-black text-white focus:border-white focus:ring-1 focus:ring-white outline-none transition-all placeholder-zinc-600 text-sm sm:text-base font-mono"
+                  placeholder="+91"
                 />
-                <p className="text-xs text-slate-500 mt-2 font-mono">MUST INCLUDE COUNTRY CODE (+91, +1)</p>
+                <p className="text-[10px] sm:text-xs text-zinc-500 mt-2 font-mono">Include country code (+91, +1, etc)</p>
               </div>
 
-              <div className="flex gap-4 pt-6">
+              <div className="flex flex-col-reverse sm:flex-row gap-3 sm:gap-4 pt-4 sm:pt-6">
                 <button 
                   type="button"
                   onClick={() => setShowForm(false)}
-                  className="flex-1 py-4 px-4 rounded-lg font-bold border border-slate-700 text-slate-300 hover:bg-slate-800 hover:text-white transition-all uppercase tracking-widest text-xs"
+                  className="w-full sm:w-1/3 min-h-[48px] sm:min-h-[52px] rounded-xl font-bold border border-white/10 text-zinc-400 hover:bg-white/10 hover:text-white transition-all uppercase text-xs sm:text-sm cursor-pointer"
                   disabled={isSubmitting}
                 >
-                  ABORT
+                  Cancel
                 </button>
                 <button 
                   type="submit"
                   disabled={isSubmitting}
-                  className="flex-[2] py-4 px-4 rounded-lg font-bold bg-[#00F2FE] text-[#050B14] hover:bg-white hover:shadow-[0_0_20px_rgba(0,242,254,0.6)] transition-all disabled:opacity-50 flex justify-center items-center gap-2 uppercase tracking-widest text-xs"
+                  className="w-full sm:flex-1 min-h-[48px] sm:min-h-[52px] rounded-xl font-bold bg-[#00dfc0] hover:bg-[#00c9ad] text-slate-950 shadow-[0_0_15px_rgba(0,223,192,0.3)] transition-all disabled:opacity-50 flex justify-center items-center gap-2 uppercase tracking-widest text-xs sm:text-sm active:scale-[0.98] cursor-pointer"
                 >
                   {isSubmitting ? (
-                    <span className="animate-spin rounded-full h-4 w-4 border-t-2 border-b-2 border-[#050B14]"></span>
+                    <span className="animate-spin rounded-full h-4 w-4 border-t-2 border-b-2 border-black"></span>
                   ) : (
                     'SAVE CONTACT'
                   )}

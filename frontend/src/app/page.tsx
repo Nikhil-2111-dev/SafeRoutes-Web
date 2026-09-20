@@ -9,9 +9,7 @@ export default function Home() {
   const [highlightedRoute, setHighlightedRoute] = useState<'safer' | 'faster'>('safer');
   const [activeLayer, setActiveLayer] = useState<'lighting' | 'activity' | 'infrastructure' | 'hazards'>('lighting');
   const [activeSignal, setActiveSignal] = useState<number>(1);
-  const [revealedScenes, setRevealedScenes] = useState<Record<string, boolean>>({
-    'scene-0': true,
-  });
+  const [revealedScenes, setRevealedScenes] = useState<Record<string, boolean>>({});
   const [activeScene, setActiveScene] = useState<string>('scene-0');
   const [scrollProgress, setScrollProgress] = useState(0);
 
@@ -28,14 +26,16 @@ export default function Home() {
   const [countdown, setCountdown] = useState(5.0);
   useEffect(() => {
     if (!revealedScenes['scene-4']) return;
+    if (countdown <= 0) return; // Stop the timer at 0 completely
+
     const interval = setInterval(() => {
       setCountdown((prev) => {
-        if (prev <= 0.2) return 5.0;
-        return Math.round((prev - 0.1) * 10) / 10;
+        const next = Math.round((prev - 0.1) * 10) / 10;
+        return next < 0 ? 0 : next;
       });
     }, 100);
     return () => clearInterval(interval);
-  }, [revealedScenes]);
+  }, [revealedScenes, countdown]);
 
   useEffect(() => {
     const sceneIds = ['scene-0', 'scene-1', 'scene-2', 'scene-3', 'scene-4', 'scene-5'];
@@ -176,7 +176,7 @@ export default function Home() {
 
       {/* Continuous Journey / Transit Spine (Ultra-wide desktop display) */}
       <div className="fixed left-3 sm:left-5 top-24 bottom-12 pointer-events-none z-30 hidden 2xl:flex flex-col items-center">
-        <div className="text-[9px] font-mono text-teal-400/80 mb-2 font-bold tracking-widest uppercase rotate-180 [writing-mode:vertical-lr]">
+        <div className="text-[9px] font-mono text-slate-200 mb-2 font-bold tracking-widest uppercase rotate-180 [writing-mode:vertical-lr]">
           ROUTE // PROGRESS
         </div>
         <div className="w-px flex-1 bg-white/[0.08] relative">
@@ -207,7 +207,7 @@ export default function Home() {
               }}
               className={`group flex items-center gap-2.5 px-2.5 py-1.5 rounded-lg transition-all text-left cursor-pointer ${
                 isActive
-                  ? 'text-teal-300 bg-teal-500/15 border border-teal-500/30 font-bold'
+                  ? 'text-white bg-teal-500/15 border border-teal-500/30 font-bold'
                   : 'text-slate-500 hover:text-slate-200 hover:bg-white/[0.03] border border-transparent'
               }`}
               aria-label={`Scroll to ${wp.label}`}
@@ -239,66 +239,43 @@ export default function Home() {
           <div className="w-full max-w-7xl mx-auto px-6 sm:px-10 lg:px-12 pt-8 sm:pt-12 pb-10 flex-1 flex flex-col lg:flex-row items-center gap-10 lg:gap-12 justify-between">
             
             {/* Left Column (~40% on Desktop): Editorial Copy & Primary Actions */}
-            <div className="w-full lg:w-[42%] flex flex-col justify-center z-10">
+            <div className={`w-full lg:w-[42%] flex flex-col justify-center items-center lg:items-start text-center lg:text-left z-10 reveal-base ${revealedScenes['scene-0'] ? 'reveal-active' : ''}`}>
               
-              {/* Eyebrow */}
-              <div className="text-xs sm:text-sm font-mono tracking-[0.22em] text-slate-400 font-semibold uppercase mb-4 sm:mb-6">
-                REAL PEOPLE. SAFER ROUTES. BRIGHTER CITIES.
-              </div>
-
               {/* Refined Headline at normal premium landing-page scale */}
-              <h1 className="text-4xl sm:text-5xl lg:text-[50px] xl:text-[56px] font-black uppercase tracking-tight leading-[1.06] text-white">
+              <h1 className="text-[34px] leading-[1.1] sm:text-5xl lg:text-[50px] xl:text-[56px] font-black uppercase tracking-tight sm:leading-[1.06] text-white">
                 THE FASTEST<br />
                 ROUTE ISN&apos;T<br />
-                <span className="text-[#00dfc0] drop-shadow-[0_0_25px_rgba(0,223,192,0.45)]">
+                <span className="text-white drop-shadow-[0_0_15px_rgba(255,255,255,0.35)] sm:drop-shadow-[0_0_25px_rgba(255,255,255,0.45)]">
                   THE SAFEST.
                 </span>
               </h1>
 
-              {/* Subtitle */}
-              <p className="mt-6 text-base sm:text-lg text-slate-300/90 font-normal max-w-md leading-relaxed">
-                SafeRoute adds a layer traditional navigation misses — the safety context around your journey.
-              </p>
-
               {/* CTA Button Group */}
-              <div className="mt-8 sm:mt-10 flex flex-wrap items-center gap-4">
-                <Link href="/map">
-                  <button className="bg-[#00dfc0] hover:bg-[#00c9ad] text-slate-950 font-bold px-7 py-3.5 rounded-full text-sm sm:text-base tracking-wide shadow-[0_0_25px_rgba(0,223,192,0.35)] transition-all hover:scale-105 active:scale-95 flex items-center gap-2 cursor-pointer">
+              <div className="mt-8 sm:mt-10 flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-4 w-full sm:w-auto">
+                <Link href="/map" className="w-full max-w-[280px] sm:w-auto sm:max-w-none">
+                  <button className="w-full sm:w-auto justify-center bg-[#00dfc0] hover:bg-[#00c9ad] text-slate-950 font-bold px-8 py-4 rounded-full text-sm sm:text-base tracking-wide shadow-[0_0_25px_rgba(0,223,192,0.25)] transition-all hover:scale-[1.02] active:scale-95 flex items-center gap-2 cursor-pointer">
                     <span>Explore SafeRoute</span>
                     <span className="text-base font-bold">→</span>
                   </button>
                 </Link>
 
-                <Link href="/report">
-                  <button className="bg-slate-900/80 hover:bg-slate-800 text-slate-200 hover:text-white px-6 py-3.5 rounded-full font-medium text-sm sm:text-base border border-slate-700/80 backdrop-blur-md transition-all hover:border-slate-500 cursor-pointer">
+                <Link href="/report" className="w-full max-w-[280px] sm:w-auto sm:max-w-none">
+                  <button className="w-full sm:w-auto justify-center bg-slate-900/80 hover:bg-slate-800 text-slate-200 hover:text-white px-8 py-4 rounded-full font-medium text-sm sm:text-base border border-slate-700/80 backdrop-blur-md transition-all hover:border-slate-500 cursor-pointer flex items-center gap-2">
                     <span>Report an incident</span>
                   </button>
                 </Link>
               </div>
 
-              {/* Smooth Interactive Scroll Indicator */}
-              <button
-                type="button"
-                onClick={() => document.getElementById('scene-1')?.scrollIntoView({ behavior: 'smooth' })}
-                className="mt-12 lg:mt-16 flex items-center gap-3 text-slate-400 hover:text-teal-300 transition-colors group cursor-pointer text-left"
-              >
-                <div className="w-[2px] h-3.5 bg-teal-400 rounded-full group-hover:h-5 transition-all" />
-                <span className="text-[11px] font-mono tracking-[0.2em] uppercase text-slate-400 group-hover:text-teal-300 transition-colors">
-                  SCROLL TO EXPLORE
-                </span>
-                <div className="w-3.5 h-5 rounded-full border border-slate-600 group-hover:border-teal-500/60 flex items-start justify-center p-[2px] transition-colors">
-                  <div className="w-1 h-1.5 bg-slate-400 group-hover:bg-teal-300 rounded-full animate-bounce" />
-                </div>
-                <div className="w-10 sm:w-14 h-[1px] bg-slate-800 group-hover:bg-teal-500/40 transition-colors" />
-              </button>
-
             </div>
 
             {/* Right Column (~60% on Desktop): Large Cinematic City Navigation Visual */}
-            <div className="w-full lg:w-[58%] relative flex items-center justify-center">
+            <div 
+              className={`w-full lg:w-[58%] relative flex items-center justify-center mt-6 sm:mt-0 reveal-base ${revealedScenes['scene-0'] ? 'reveal-active' : ''}`}
+              style={{ transitionDelay: '300ms' }}
+            >
               
               {/* Card Canvas Container */}
-              <div className="relative w-full aspect-[4/3] max-w-[660px] rounded-2xl overflow-hidden bg-[#070b16] border border-white/[0.08] shadow-[0_20px_60px_rgba(0,0,0,0.8),0_0_40px_rgba(0,223,192,0.06)]">
+              <div className="relative w-full aspect-[4/3] sm:aspect-[4/3] max-w-[660px] rounded-2xl sm:rounded-3xl overflow-hidden bg-[#070b16] border border-white/[0.08] shadow-[0_15px_40px_rgba(0,0,0,0.6),0_0_30px_rgba(0,223,192,0.05)]">
                 
                 {/* SVG Nighttime City Navigation Scene */}
                 <svg
@@ -499,57 +476,33 @@ export default function Home() {
                   </g>
                 </svg>
 
-                {/* Telemetry Header (Top Right) */}
-                <div className="absolute top-3 right-4 sm:top-4 sm:right-6 text-right font-mono text-[9px] sm:text-[10px] tracking-[0.2em] text-slate-400 uppercase pointer-events-none">
-                  <div>A SAFER CITY</div>
-                  <div className="text-slate-500">FOR BRIGHTER TOMORROWS</div>
-                </div>
+                {/* Telemetry Header (Top Right) Removed for cleaner look */}
 
-                {/* Floating "You are here" Pill */}
-                <div className="absolute left-[28%] top-[72%] -translate-y-1/2 flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-slate-900/95 border border-slate-700/80 shadow-lg text-[10px] sm:text-[11px] text-slate-300 font-medium whitespace-nowrap backdrop-blur-md">
+                {/* Floating "You" Label */}
+                <div className="absolute left-[20%] top-[78%] -translate-y-1/2 flex items-center gap-1.5 text-[10px] sm:text-[11px] text-slate-200 font-bold drop-shadow-md whitespace-nowrap">
                   <span className="w-1.5 h-1.5 rounded-full bg-sky-400 animate-pulse" />
-                  <span>You are here</span>
+                  <span>You</span>
                 </div>
 
-                {/* Floating "Safer Route" Card (Top-Left of Route) */}
-                <div className="absolute left-[26%] sm:left-[30%] top-[12%] sm:top-[14%] flex items-start gap-2.5 p-2.5 sm:p-3 rounded-xl bg-slate-900/90 border border-teal-500/40 backdrop-blur-md shadow-[0_10px_30px_rgba(0,0,0,0.6),0_0_20px_rgba(0,223,192,0.15)] max-w-[190px] sm:max-w-[215px]">
-                  <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-teal-950/80 border border-teal-500/50 flex items-center justify-center text-teal-400 shrink-0">
-                    <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
-                      <path d="m9 12 2 2 4-4" />
-                    </svg>
-                  </div>
-                  <div className="min-w-0">
-                    <div className="text-xs sm:text-sm font-bold text-white leading-tight">Safer Route</div>
-                    <div className="text-[10px] sm:text-[11px] text-teal-300/90 font-medium truncate mt-0.5">Better lit, more people</div>
-                    <div className="text-[9px] sm:text-[10px] text-slate-400 font-mono mt-0.5">18 min • ~ 2.4 km</div>
-                  </div>
+                {/* Floating "Safer Route" Label */}
+                <div className="absolute left-[26%] sm:left-[30%] top-[12%] sm:top-[14%] text-xs sm:text-sm font-bold text-slate-200 drop-shadow-md tracking-wide">
+                  Safer Route
                 </div>
 
-                {/* Floating "Faster Route" Card (Lower-Right of Route) */}
-                <div className="absolute right-[4%] sm:right-[6%] top-[48%] sm:top-[50%] flex items-start gap-2.5 p-2.5 sm:p-3 rounded-xl bg-slate-900/90 border border-amber-500/30 backdrop-blur-md shadow-[0_10px_30px_rgba(0,0,0,0.6)] max-w-[185px] sm:max-w-[205px]">
-                  <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-amber-950/80 border border-amber-500/40 flex items-center justify-center text-amber-400 shrink-0">
-                    <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
-                      <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" />
-                    </svg>
-                  </div>
-                  <div className="min-w-0">
-                    <div className="text-xs sm:text-sm font-bold text-white leading-tight">Faster Route</div>
-                    <div className="text-[10px] sm:text-[11px] text-slate-300 truncate mt-0.5">Quicker but higher risk</div>
-                    <div className="text-[9px] sm:text-[10px] text-slate-400 font-mono mt-0.5">12 min • ~ 1.8 km</div>
-                  </div>
+                {/* Floating "Faster Route" Label */}
+                <div className="absolute right-[4%] sm:right-[6%] top-[48%] sm:top-[50%] text-xs sm:text-sm font-bold text-amber-500 drop-shadow-md tracking-wide">
+                  Faster Route
                 </div>
 
-                {/* Floating "Destination" Card (Top Right next to Pin) */}
-                <div className="absolute right-[3%] sm:right-[4%] top-[12%] sm:top-[14%] p-2 sm:p-2.5 rounded-lg bg-slate-900/90 border border-slate-700/70 backdrop-blur-md shadow-lg min-w-[125px]">
-                  <div className="text-[11px] sm:text-xs font-bold text-white leading-tight">Destination</div>
-                  <div className="text-[10px] text-slate-400 mt-0.5">City Civic Center</div>
+                {/* Floating "Destination" Label */}
+                <div className="absolute right-[3%] sm:right-[4%] top-[12%] sm:top-[14%] text-[11px] sm:text-xs font-bold text-amber-500 drop-shadow-md tracking-wide">
+                  Destination
                 </div>
 
                 {/* Compass Rose & GPS Telemetry (Bottom Right) */}
                 <div className="absolute bottom-3 right-4 sm:bottom-4 sm:right-6 flex flex-col items-end gap-1.5 pointer-events-none font-mono">
                   <div className="w-6 h-6 sm:w-7 sm:h-7 rounded-full border border-slate-700/80 flex flex-col items-center justify-center text-[8px] text-slate-400 bg-slate-950/40">
-                    <span className="font-bold text-teal-400 text-[9px]">N</span>
+                    <span className="font-bold text-slate-200 text-[9px]">N</span>
                     <span className="w-1.5 h-[1px] bg-slate-600 my-[1px]" />
                     <span className="text-[8px] text-slate-600">S</span>
                   </div>
@@ -565,12 +518,15 @@ export default function Home() {
           </div>
 
           {/* Spatial Navigation Telemetry Horizon Strip (Integrated Transition from Hero) */}
-          <div className="w-full border-t border-white/[0.08] bg-[#050914]/85 backdrop-blur-md">
-            <div className="max-w-7xl mx-auto px-6 sm:px-10 lg:px-12 py-5 sm:py-6 flex flex-col md:flex-row items-stretch md:items-center justify-between gap-6 md:gap-8 text-xs font-mono">
+          <div className="w-full border-t border-white/[0.08] bg-[#050914]/85 backdrop-blur-md relative z-20">
+            <div 
+              className={`max-w-7xl mx-auto px-6 sm:px-10 lg:px-12 py-5 sm:py-6 flex flex-col md:flex-row items-start md:items-center justify-center gap-5 md:gap-12 text-xs font-mono reveal-base w-fit md:w-full ${revealedScenes['scene-0'] ? 'reveal-active' : ''}`}
+              style={{ transitionDelay: '600ms' }}
+            >
               
               {/* Pillar 1 */}
-              <div className="flex items-center gap-3.5 flex-1 min-w-0">
-                <div className="w-9 h-9 rounded-full bg-teal-950/80 border border-teal-500/40 flex items-center justify-center text-teal-400 shrink-0">
+              <div className="flex items-center justify-start gap-3.5 min-w-0">
+                <div className="w-9 h-9 rounded-full bg-teal-950/80 border border-teal-500/40 flex items-center justify-center text-slate-200 shrink-0">
                   <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                     <polygon points="3 6 9 3 15 6 21 3 21 18 15 21 9 18 3 21" />
                     <line x1="9" y1="3" x2="9" y2="18" />
@@ -578,17 +534,15 @@ export default function Home() {
                   </svg>
                 </div>
                 <div className="min-w-0">
-                  <div className="text-[10px] tracking-widest text-teal-400 font-bold uppercase">ROUTE // CONTEXT</div>
                   <div className="text-sm font-bold text-white tracking-tight truncate font-sans">Safety-Aware Routing</div>
-                  <div className="text-[11px] text-slate-400 truncate">Illumination &amp; street-level safety focus</div>
                 </div>
               </div>
 
               <div className="hidden md:block w-px h-8 bg-white/[0.08]" />
 
               {/* Pillar 2 */}
-              <div className="flex items-center gap-3.5 flex-1 min-w-0">
-                <div className="w-9 h-9 rounded-full bg-teal-950/80 border border-teal-500/40 flex items-center justify-center text-teal-400 shrink-0">
+              <div className="flex items-center justify-start gap-3.5 min-w-0">
+                <div className="w-9 h-9 rounded-full bg-teal-950/80 border border-teal-500/40 flex items-center justify-center text-slate-200 shrink-0">
                   <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                     <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
                     <circle cx="9" cy="7" r="4" />
@@ -597,16 +551,14 @@ export default function Home() {
                   </svg>
                 </div>
                 <div className="min-w-0">
-                  <div className="text-[10px] tracking-widest text-teal-400 font-bold uppercase">COMMUNITY // SIGNAL</div>
                   <div className="text-sm font-bold text-white tracking-tight truncate font-sans">Pedestrian Hazard Reports</div>
-                  <div className="text-[11px] text-slate-400 truncate">Shared local insights from neighborhood walkers</div>
                 </div>
               </div>
 
               <div className="hidden md:block w-px h-8 bg-white/[0.08]" />
 
               {/* Pillar 3 */}
-              <div className="flex items-center gap-3.5 flex-1 min-w-0">
+              <div className="flex items-center justify-start gap-3.5 min-w-0">
                 <div className="w-9 h-9 rounded-full bg-rose-950/80 border border-rose-500/40 flex items-center justify-center text-rose-400 shrink-0">
                   <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                     <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
@@ -614,9 +566,7 @@ export default function Home() {
                   </svg>
                 </div>
                 <div className="min-w-0">
-                  <div className="text-[10px] tracking-widest text-rose-400 font-bold uppercase">SOS // UI SIMULATION</div>
                   <div className="text-sm font-bold text-white tracking-tight truncate font-sans">Emergency Response</div>
-                  <div className="text-[11px] text-slate-400 truncate">5-second grace window &amp; coordinate packaging</div>
                 </div>
               </div>
 
@@ -655,9 +605,6 @@ export default function Home() {
             />
             <circle cx="300" cy="60" r="4.5" fill="#00dfc0" className="animate-tracer-pulse" />
           </svg>
-          <div className="absolute font-mono text-[9px] tracking-[0.25em] text-teal-400/80 uppercase bg-[#070b16]/90 px-2.5 py-1 rounded-full border border-teal-500/30 backdrop-blur-md">
-            TRANSIT // DIVERGENCE ZONE
-          </div>
         </div>
 
         {/* ================================================================= */}
@@ -668,27 +615,21 @@ export default function Home() {
           <div className="max-w-7xl mx-auto">
             
             {/* Editorial Scene Header & Route Selector */}
-            <div className={`flex flex-col md:flex-row items-start md:items-end justify-between gap-6 mb-8 sm:mb-10 reveal-base ${revealedScenes['scene-1'] ? 'reveal-active' : ''}`}>
+            <div className={`flex flex-col items-center text-center justify-center gap-6 mb-8 sm:mb-10 reveal-base ${revealedScenes['scene-1'] ? 'reveal-active' : ''}`}>
               <div>
-                <div className="text-[11px] font-mono tracking-[0.25em] text-teal-400 uppercase mb-2">
-                  01 // ROUTE CHOICE
-                </div>
                 <h2 className="text-3xl sm:text-4xl lg:text-5xl font-black uppercase tracking-tight text-white leading-tight">
                   Two routes. Two very different journeys.
                 </h2>
-                <p className="mt-2 text-slate-400 text-sm sm:text-base max-w-xl font-light leading-relaxed">
-                  Traditional navigation routes pedestrians through dark shortcuts to save three minutes. SafeRoute balances travel time with street-level safety context.
-                </p>
               </div>
 
               {/* Compact Floating Route Selector */}
-              <div className="flex items-center gap-2 p-1.5 rounded-full bg-slate-900/90 border border-white/[0.1] backdrop-blur-md shrink-0">
+              <div className="flex items-center justify-center gap-2 p-1.5 rounded-full bg-slate-900/90 border border-white/[0.1] backdrop-blur-md shrink-0">
                 <button
                   type="button"
                   onClick={() => setHighlightedRoute('safer')}
                   className={`px-4 py-2 rounded-full text-xs font-mono tracking-wider transition-all cursor-pointer ${
                     highlightedRoute === 'safer'
-                      ? 'bg-teal-500/20 text-teal-300 border border-teal-500/50 shadow-[0_0_15px_rgba(20,184,166,0.3)] font-bold'
+                      ? 'bg-teal-500/20 text-white border border-teal-500/50 shadow-[0_0_15px_rgba(20,184,166,0.3)] font-bold'
                       : 'text-slate-400 hover:text-white border border-transparent'
                   }`}
                 >
@@ -870,7 +811,7 @@ export default function Home() {
                     className={`absolute top-[16%] left-[42%] -translate-y-1/2 p-2.5 sm:p-3 rounded-xl bg-slate-900/90 border border-teal-500/40 backdrop-blur-md shadow-xl text-left pointer-events-none max-w-[240px] reveal-base ${revealedScenes['scene-1'] ? 'reveal-active' : ''}`}
                     style={{ transitionDelay: '350ms' }}
                   >
-                    <div className="flex items-center gap-1.5 text-[10px] font-mono text-teal-300 font-bold uppercase">
+                    <div className="flex items-center gap-1.5 text-[10px] font-mono text-white font-bold uppercase">
                       <span className="w-1.5 h-1.5 rounded-full bg-teal-400" />
                       <span>DEMO: ~18 MIN WALK</span>
                     </div>
@@ -883,7 +824,7 @@ export default function Home() {
                     className={`absolute bottom-[22%] right-[22%] p-2 rounded-lg bg-slate-900/90 border border-teal-500/30 backdrop-blur-md text-left pointer-events-none hidden sm:block reveal-base ${revealedScenes['scene-1'] ? 'reveal-active' : ''}`}
                     style={{ transitionDelay: '450ms' }}
                   >
-                    <div className="text-[10px] font-mono text-teal-400 font-bold">CIVIC PLAZA WAYPOINT</div>
+                    <div className="text-[10px] font-mono text-slate-200 font-bold">CIVIC PLAZA WAYPOINT</div>
                     <div className="text-[10px] text-slate-400">Zero reported hazard flags • Well populated</div>
                   </div>
                 </>
@@ -903,23 +844,6 @@ export default function Home() {
                   </div>
                 </>
               )}
-
-              {/* Bottom Telemetry Passage Ribbon */}
-              <div className="absolute bottom-3 left-4 right-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 pt-2 border-t border-white/[0.08] text-[10px] font-mono text-slate-400">
-                <div className="flex items-center gap-2 flex-wrap">
-                  <span className="text-teal-400 font-bold">WAYPOINT TRANSIT:</span>
-                  <span>Origin</span>
-                  <span>→</span>
-                  <span>{highlightedRoute === 'safer' ? 'Market Ave Boulevard' : 'Dark Rear Alley'}</span>
-                  <span>→</span>
-                  <span>{highlightedRoute === 'safer' ? 'Civic Plaza' : 'Low-Light Underpass'}</span>
-                  <span>→</span>
-                  <span>Destination</span>
-                </div>
-                <div className="text-slate-500">
-                  DEMO VISUALIZATION // ILLUSTRATIVE ATTRIBUTES
-                </div>
-              </div>
 
             </div>
 
@@ -956,9 +880,6 @@ export default function Home() {
             />
             <circle cx="300" cy="60" r="4.5" fill="#38bdf8" className="animate-tracer-pulse" />
           </svg>
-          <div className="absolute font-mono text-[9px] tracking-[0.25em] text-teal-400/80 uppercase bg-[#070b16]/90 px-2.5 py-1 rounded-full border border-teal-500/30 backdrop-blur-md">
-            ROUTE → GIS GRID FEED
-          </div>
         </div>
 
         {/* ================================================================= */}
@@ -970,15 +891,9 @@ export default function Home() {
             
             {/* Editorial Scene Header */}
             <div className={`text-center max-w-3xl mx-auto mb-8 sm:mb-10 reveal-base ${revealedScenes['scene-2'] ? 'reveal-active' : ''}`}>
-              <div className="text-[11px] font-mono tracking-[0.25em] text-teal-400 uppercase mb-2">
-                02 // SAFETY INTELLIGENCE
-              </div>
               <h2 className="text-3xl sm:text-4xl lg:text-5xl font-black uppercase tracking-tight text-white leading-tight">
-                The safety factors traditional maps miss.
+                Beyond traditional maps.
               </h2>
-              <p className="mt-2 text-slate-400 text-sm sm:text-base font-light leading-relaxed">
-                SafeRoute evaluates multi-layer physical street conditions rather than simple road geometry.
-              </p>
             </div>
 
             {/* Compact Floating Layer Selectors (Centered Row of Tabs) */}
@@ -1000,7 +915,7 @@ export default function Home() {
                     onClick={() => setActiveLayer(layer.id as 'lighting' | 'activity' | 'infrastructure' | 'hazards')}
                     className={`px-4 py-2.5 rounded-full text-xs font-mono transition-all cursor-pointer flex items-center gap-2 border ${
                       isActive
-                        ? 'bg-teal-500/20 text-teal-300 border-teal-500/50 shadow-[0_0_20px_rgba(20,184,166,0.25)] font-bold'
+                        ? 'bg-teal-500/20 text-white border-teal-500/50 shadow-[0_0_20px_rgba(20,184,166,0.25)] font-bold'
                         : 'bg-slate-900/80 text-slate-400 border-white/[0.08] hover:text-white hover:border-white/[0.15]'
                     }`}
                   >
@@ -1145,7 +1060,7 @@ export default function Home() {
                   className={`absolute top-[18%] left-[46%] -translate-x-1/2 p-2.5 sm:p-3 rounded-xl bg-slate-900/90 border border-teal-500/40 backdrop-blur-md shadow-xl text-left pointer-events-none max-w-[280px] reveal-base ${revealedScenes['scene-2'] ? 'reveal-active' : ''}`}
                   style={{ transitionDelay: '350ms' }}
                 >
-                  <div className="flex items-center gap-1.5 text-[10px] font-mono text-teal-300 font-bold uppercase">
+                  <div className="flex items-center gap-1.5 text-[10px] font-mono text-white font-bold uppercase">
                     <span className="w-1.5 h-1.5 rounded-full bg-teal-400" />
                     <span>PEDESTRIAN ACTIVITY LAYER</span>
                   </div>
@@ -1159,7 +1074,7 @@ export default function Home() {
                   className={`absolute top-[12%] left-[36%] -translate-x-1/2 p-2.5 sm:p-3 rounded-xl bg-slate-900/90 border border-sky-500/40 backdrop-blur-md shadow-xl text-left pointer-events-none max-w-[280px] reveal-base ${revealedScenes['scene-2'] ? 'reveal-active' : ''}`}
                   style={{ transitionDelay: '350ms' }}
                 >
-                  <div className="flex items-center gap-1.5 text-[10px] font-mono text-sky-300 font-bold uppercase">
+                  <div className="flex items-center gap-1.5 text-[10px] font-mono text-slate-200 font-bold uppercase">
                     <span className="w-1.5 h-1.5 rounded-full bg-sky-400" />
                     <span>SAFETY INFRASTRUCTURE LAYER</span>
                   </div>
@@ -1181,12 +1096,6 @@ export default function Home() {
                   <div className="text-[10px] text-slate-300/80 mt-0.5">Routes around pedestrian-flagged outages and blocked sidewalks</div>
                 </div>
               )}
-
-              {/* Bottom Footnote */}
-              <div className="absolute bottom-3 left-4 right-4 flex items-center justify-between text-[10px] font-mono text-slate-500 pt-2 border-t border-white/[0.06]">
-                <span>CONCEPTUAL SAFETY LAYERS // DESIGN INTENT FOR SAFE TRANSIT EVALUATION</span>
-                <span className="text-teal-400">DEMO MODEL</span>
-              </div>
 
             </div>
 
@@ -1224,9 +1133,6 @@ export default function Home() {
             />
             <circle cx="300" cy="60" r="4.5" fill="#2dd4bf" className="animate-tracer-pulse" />
           </svg>
-          <div className="absolute font-mono text-[9px] tracking-[0.25em] text-teal-400/80 uppercase bg-[#070b16]/90 px-2.5 py-1 rounded-full border border-teal-500/30 backdrop-blur-md">
-            GRID // RADAR CONVERGENCE
-          </div>
         </div>
 
         {/* ================================================================= */}
@@ -1238,15 +1144,9 @@ export default function Home() {
             
             {/* Editorial Scene Header */}
             <div className={`text-center max-w-3xl mx-auto mb-8 sm:mb-10 reveal-base ${revealedScenes['scene-3'] ? 'reveal-active' : ''}`}>
-              <div className="text-[11px] font-mono tracking-[0.25em] text-teal-400 uppercase mb-2">
-                03 // COMMUNITY SIGNALS
-              </div>
               <h2 className="text-3xl sm:text-4xl lg:text-5xl font-black uppercase tracking-tight text-white leading-tight">
-                Local awareness, reported by pedestrians.
+                Community-driven awareness.
               </h2>
-              <p className="mt-2 text-slate-400 text-sm sm:text-base font-light leading-relaxed">
-                When someone reports a streetlamp outage or hazard, that context helps other walkers make informed route choices after dark.
-              </p>
             </div>
 
             {/* Enlarged Radar Canvas with Spatially Connected Annotation */}
@@ -1323,7 +1223,7 @@ export default function Home() {
                 </svg>
 
                 {/* Compass Markers */}
-                <div className="absolute top-2 font-mono text-[9px] text-teal-400 font-bold">N</div>
+                <div className="absolute top-2 font-mono text-[9px] text-slate-200 font-bold">N</div>
                 <div className="absolute bottom-2 font-mono text-[9px] text-slate-500">S</div>
                 <div className="absolute left-2 font-mono text-[9px] text-slate-500">W</div>
                 <div className="absolute right-2 font-mono text-[9px] text-slate-500">E</div>
@@ -1342,7 +1242,7 @@ export default function Home() {
                       style={{ transitionDelay: '300ms' }}
                     >
                       <div className="flex items-center justify-between gap-2">
-                        <div className="flex items-center gap-1.5 font-mono text-[10px] text-teal-400 font-bold">
+                        <div className="flex items-center gap-1.5 font-mono text-[10px] text-slate-200 font-bold">
                           <span className={`w-2 h-2 rounded-full ${
                             current.color === 'amber' ? 'bg-amber-400' :
                             current.color === 'coral' ? 'bg-orange-400' :
@@ -1355,11 +1255,11 @@ export default function Home() {
                         </span>
                       </div>
                       <div className="text-xs sm:text-sm font-bold text-white mt-1">{current.title}</div>
-                      <div className="text-[10px] font-mono text-teal-400/90 mt-0.5">{current.location}</div>
+                      <div className="text-[10px] font-mono text-slate-200 mt-0.5">{current.location}</div>
                       <p className="text-[11px] text-slate-300/80 font-light mt-1 leading-snug">{current.detail}</p>
                       <div className="pt-2 mt-2 border-t border-white/[0.06] text-[9px] font-mono text-slate-400 flex items-center justify-between">
                         <span>{current.coords}</span>
-                        <span className="text-teal-400">AVOIDANCE APPLIED</span>
+                        <span className="text-slate-200">AVOIDANCE APPLIED</span>
                       </div>
                     </div>
                   );
@@ -1379,7 +1279,7 @@ export default function Home() {
                     onClick={() => setActiveSignal(s.id)}
                     className={`px-3.5 py-1.5 rounded-full text-xs font-mono transition-all cursor-pointer border ${
                       activeSignal === s.id
-                        ? 'bg-teal-500/20 text-teal-300 border-teal-500/50 font-bold shadow-[0_0_12px_rgba(20,184,166,0.2)]'
+                        ? 'bg-teal-500/20 text-white border-teal-500/50 font-bold shadow-[0_0_12px_rgba(20,184,166,0.2)]'
                         : 'bg-slate-900/60 text-slate-400 border-white/[0.06] hover:text-white'
                     }`}
                   >
@@ -1430,9 +1330,6 @@ export default function Home() {
             />
             <circle cx="300" cy="60" r="4.5" fill="#f43f5e" className="animate-tracer-pulse" />
           </svg>
-          <div className="absolute font-mono text-[9px] tracking-[0.25em] text-rose-400 uppercase bg-[#070b16]/90 px-2.5 py-1 rounded-full border border-rose-500/30 backdrop-blur-md shadow-[0_0_12px_rgba(244,63,94,0.3)]">
-            INCIDENT PROXIMITY // SOS CORRIDOR
-          </div>
         </div>
 
         {/* ================================================================= */}
@@ -1447,15 +1344,9 @@ export default function Home() {
             
             {/* Editorial Scene Header */}
             <div className={`text-center max-w-3xl mx-auto mb-8 sm:mb-10 reveal-base ${revealedScenes['scene-4'] ? 'reveal-active' : ''}`}>
-              <div className="text-[11px] font-mono tracking-[0.25em] text-rose-400 uppercase mb-2">
-                04 // EMERGENCY RESPONSE
-              </div>
               <h2 className="text-3xl sm:text-4xl lg:text-5xl font-black uppercase tracking-tight text-white leading-tight">
                 Protection when seconds count.
               </h2>
-              <p className="mt-2 text-slate-400 text-sm sm:text-base font-light leading-relaxed">
-                SafeRoute includes a 5-second cancelable countdown to prevent false alarms, with an instant override when urgency is critical.
-              </p>
             </div>
 
             {/* Centerpiece: Sculptural Emergency HUD & Countdown Simulation */}
@@ -1495,9 +1386,7 @@ export default function Home() {
                     <span>Initiate SOS Simulation</span>
                     <span>→</span>
                   </button>
-                  <div className="text-[10px] font-mono text-slate-500 mt-2 text-center">
-                    * SafeRoute prototype simulation. In this demo, alerts are demonstrated in-browser.
-                  </div>
+
                 </div>
 
               </div>
@@ -1525,9 +1414,6 @@ export default function Home() {
                     <div className="font-mono text-xs text-white font-bold tracking-wider uppercase">
                       TRIGGER
                     </div>
-                    <p className="text-[11px] text-slate-400 font-light mt-1 max-w-[180px] leading-relaxed">
-                      Emergency button pressed via in-app red SOS action or lock screen.
-                    </p>
                   </div>
 
                   {/* Step 2 */}
@@ -1538,9 +1424,6 @@ export default function Home() {
                     <div className="font-mono text-xs text-rose-400 font-bold tracking-wider uppercase">
                       5 SEC GRACE
                     </div>
-                    <p className="text-[11px] text-slate-400 font-light mt-1 max-w-[180px] leading-relaxed">
-                      Audible &amp; visual countdown provides an instant window to cancel false alarms.
-                    </p>
                   </div>
 
                   {/* Step 3 */}
@@ -1551,9 +1434,6 @@ export default function Home() {
                     <div className="font-mono text-xs text-white font-bold tracking-wider uppercase">
                       LOCATION ATTACHED
                     </div>
-                    <p className="text-[11px] text-slate-400 font-light mt-1 max-w-[180px] leading-relaxed">
-                      High-accuracy GPS coordinates (40.7128° N, 74.0060° W) packaged from device.
-                    </p>
                   </div>
 
                   {/* Step 4 */}
@@ -1564,9 +1444,6 @@ export default function Home() {
                     <div className="font-mono text-xs text-white font-bold tracking-wider uppercase">
                       ALERT BROADCAST
                     </div>
-                    <p className="text-[11px] text-slate-400 font-light mt-1 max-w-[180px] leading-relaxed">
-                      Beacon dispatched to designated emergency contacts with route context.
-                    </p>
                   </div>
 
                 </div>
@@ -1608,7 +1485,7 @@ export default function Home() {
             />
             <circle cx="300" cy="60" r="4.5" fill="#00dfc0" className="animate-tracer-pulse" />
           </svg>
-          <div className="absolute font-mono text-[9px] tracking-[0.25em] text-teal-400 uppercase bg-[#070b16]/90 px-2.5 py-1 rounded-full border border-teal-500/30 backdrop-blur-md shadow-[0_0_12px_rgba(0,223,192,0.3)]">
+          <div className="absolute font-mono text-[9px] tracking-[0.25em] text-slate-200 uppercase bg-[#070b16]/90 px-2.5 py-1 rounded-full border border-teal-500/30 backdrop-blur-md shadow-[0_0_12px_rgba(0,223,192,0.3)]">
             EMERGENCY RESOLVED // SAFE DESTINATION
           </div>
         </div>
@@ -1638,7 +1515,7 @@ export default function Home() {
             style={{ transitionDelay: '150ms' }}
           >
             
-            <div className="text-[11px] font-mono tracking-[0.3em] text-teal-400 uppercase">
+            <div className="text-[11px] font-mono tracking-[0.3em] text-slate-200 uppercase">
               05 // SAFE TRANSIT
             </div>
 
@@ -1656,7 +1533,7 @@ export default function Home() {
             {/* Interactive Destination Search Mockup */}
             <div className="max-w-xl mx-auto p-2 rounded-full bg-slate-900/90 border border-white/[0.12] backdrop-blur-xl shadow-2xl flex items-center justify-between gap-3">
               <div className="flex items-center gap-3 pl-4 text-slate-400 text-sm font-light">
-                <svg className="w-5 h-5 text-teal-400 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <svg className="w-5 h-5 text-slate-200 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                   <circle cx="12" cy="12" r="10" />
                   <polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76" />
                 </svg>
@@ -1685,9 +1562,7 @@ export default function Home() {
               </Link>
             </div>
 
-            <div className="text-[11px] font-mono text-slate-500 pt-4">
-              SafeRoute Prototype // Designed for Hackathon Demonstration
-            </div>
+
 
           </div>
 
@@ -1707,10 +1582,10 @@ export default function Home() {
           </div>
 
           <div className="flex items-center gap-6">
-            <Link href="/map" className="hover:text-teal-400 transition-colors">MAP</Link>
-            <Link href="/report" className="hover:text-teal-400 transition-colors">REPORT</Link>
-            <Link href="/login" className="hover:text-teal-400 transition-colors">LOG IN</Link>
-            <Link href="/register" className="hover:text-teal-400 transition-colors">REGISTER</Link>
+            <Link href="/map" className="hover:text-slate-200 transition-colors">MAP</Link>
+            <Link href="/report" className="hover:text-slate-200 transition-colors">REPORT</Link>
+            <Link href="/login" className="hover:text-slate-200 transition-colors">LOG IN</Link>
+            <Link href="/register" className="hover:text-slate-200 transition-colors">REGISTER</Link>
           </div>
 
           <div>

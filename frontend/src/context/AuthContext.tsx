@@ -12,12 +12,14 @@ interface AuthContextType {
   user: SafeRouteUser | null;
   isLoading: boolean;
   syncProfile: () => Promise<void>;
+  updateProfile: (updates: any) => void;
 }
 
 const AuthContext = createContext<AuthContextType>({ 
   user: null, 
   isLoading: true,
-  syncProfile: async () => {}
+  syncProfile: async () => {},
+  updateProfile: () => {}
 });
 
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
@@ -122,6 +124,16 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     }
   };
 
+  const updateProfile = (updates: any) => {
+    setUser((prev) => {
+      if (!prev) return prev;
+      return {
+        ...prev,
+        profile: { ...prev.profile, ...updates }
+      };
+    });
+  };
+
   useEffect(() => {
     const checkUser = async () => {
       try {
@@ -152,7 +164,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   }, []);
 
   return (
-    <AuthContext.Provider value={{ user, isLoading, syncProfile }}>
+    <AuthContext.Provider value={{ user, isLoading, syncProfile, updateProfile }}>
       {children}
     </AuthContext.Provider>
   );

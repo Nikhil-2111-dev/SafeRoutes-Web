@@ -3,7 +3,7 @@ import { useState, useEffect, useCallback, useRef, useMemo, memo } from 'react';
 import Map, { Marker, Popup, Source, Layer, NavigationControl, MapRef } from 'react-map-gl/maplibre';
 import 'maplibre-gl/dist/maplibre-gl.css';
 import { io, Socket } from 'socket.io-client';
-import { Search, Navigation2, Plus, Minus, MapPin, X, LocateFixed, Route, PanelRightClose, PanelRightOpen, ArrowRight, Zap, ShieldCheck, Scale, Clock, Gauge } from 'lucide-react';
+import { Search, Navigation2, Plus, Minus, MapPin, X, LocateFixed, Route, PanelRightClose, PanelRightOpen, ArrowRight, Zap, ShieldCheck, Scale, Clock, Gauge, Map as MapIcon } from 'lucide-react';
 import { usePOIs } from '../hooks/usePOIs';
 import { loadPOIIcons } from '../utils/poiIcons';
 
@@ -917,16 +917,28 @@ const incidentFeature = e.features && e.features.find((f: any) => f.layer.id ===
 
   if (!initialLocation) {
     return (
-      <div className="w-full h-full flex flex-col items-center justify-center bg-[#0a0a0a] text-white p-6 text-center font-sans z-50 absolute inset-0">
-        <div className="relative w-20 h-20 mb-6 flex justify-center items-center">
-          <div className="absolute inset-0 border-4 border-white/10 rounded-full"></div>
-          <div className="absolute inset-0 border-4 border-blue-500 rounded-full border-t-transparent animate-spin"></div>
-          <span className="text-2xl">📍</span>
+      <div className="w-full h-full flex flex-col items-center justify-center bg-[#040711] text-white p-6 text-center font-sans z-50 absolute inset-0 overflow-hidden">
+        {/* Animated Background Elements */}
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-teal-500/5 blur-[120px] rounded-full"></div>
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[300px] h-[300px] bg-cyan-500/10 blur-[80px] rounded-full"></div>
+
+        <div className="relative w-24 h-24 mb-8 flex justify-center items-center">
+          {/* Outer Rotating Rings */}
+          <div className="absolute inset-0 border-2 border-dashed border-teal-500/30 rounded-full animate-[spin_10s_linear_infinite]"></div>
+          <div className="absolute inset-2 border-2 border-cyan-400/50 rounded-full border-t-transparent animate-[spin_2s_linear_infinite]"></div>
+          <div className="absolute inset-4 border-2 border-white/10 rounded-full border-b-transparent animate-[spin_3s_linear_infinite_reverse]"></div>
+          
+          {/* Center Glowing Map Icon */}
+          <div className="relative z-10 w-12 h-12 bg-teal-950/80 rounded-full flex items-center justify-center border border-teal-500/50 shadow-[0_0_20px_rgba(45,212,191,0.4)]">
+            <MapIcon className="w-6 h-6 text-teal-400 animate-pulse" />
+          </div>
         </div>
-        <h2 className="text-2xl font-black mb-2 tracking-tight">Acquiring GPS Signal...</h2>
-        <p className="text-slate-400 font-medium animate-pulse">Initializing your location</p>
-        {/* Optional text or spinner inside the loading screen */}
-        <p className="text-gray-400 mt-4 font-medium animate-pulse">Finding your location...</p>
+
+        <h2 className="text-2xl font-black mb-2 tracking-tight uppercase text-white">Acquiring Location</h2>
+        <div className="flex items-center gap-2 text-teal-400/80 font-mono text-xs uppercase tracking-widest animate-pulse">
+          <div className="w-1.5 h-1.5 bg-teal-400 rounded-full"></div>
+          Synchronizing with satellite network
+        </div>
       </div>
     );
   }
@@ -1167,7 +1179,7 @@ const incidentFeature = e.features && e.features.find((f: any) => f.layer.id ===
             </button>
             <button
               onClick={startNavigation}
-              className="flex-[2.5] bg-white hover:bg-gray-100 text-black font-bold py-3.5 rounded-2xl shadow-2xl transition-transform hover:scale-[1.01] flex items-center justify-center gap-2 text-sm"
+              className="flex-[2.5] bg-[#00dfc0] hover:bg-[#00c9ad] text-slate-950 font-bold py-3.5 rounded-2xl shadow-[0_0_15px_rgba(0,223,192,0.3)] transition-transform hover:scale-[1.01] flex items-center justify-center gap-2 text-sm"
             >
               <Navigation2 className="w-4 h-4 fill-current" />
               Start Navigation
@@ -1498,7 +1510,7 @@ const incidentFeature = e.features && e.features.find((f: any) => f.layer.id ===
                     setDestination({ lat: selectedPoi.lat, lng: selectedPoi.lon });
                     setSelectedPoi(null);
                   }} 
-                  className="flex-1 bg-white text-black font-bold py-2 rounded-xl text-sm hover:bg-gray-200 transition-colors"
+                  className="flex-1 bg-[#00dfc0] hover:bg-[#00c9ad] text-slate-950 font-bold py-2 rounded-xl text-sm shadow-[0_0_15px_rgba(0,223,192,0.3)] transition-colors"
                 >
                   Directions
                 </button>
