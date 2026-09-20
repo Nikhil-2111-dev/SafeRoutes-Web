@@ -1,19 +1,13 @@
 import { Router } from 'express';
 import { TrackerService } from '../services/tracker.service';
 import { GeofenceService } from '../services/geofence.service';
-import { requireAuth } from '../middleware/auth.middleware';
 
 const router = Router();
 const trackerService = new TrackerService();
 const geofenceService = new GeofenceService();
 
-router.post('/', requireAuth, async (req, res) => {
-  const deviceId = req.user?.sub;
-  const { latitude, longitude } = req.body;
-
-  if (!deviceId) {
-    return res.status(401).json({ error: 'Unauthorized: Missing user identity' });
-  }
+router.post('/', async (req, res) => {
+  const { deviceId = 'anonymous-device', latitude, longitude, accuracy, speed, heading, sampleTime } = req.body;
 
   if (!latitude || !longitude) {
     return res.status(400).json({ error: 'Latitude and longitude are required' });
@@ -21,7 +15,7 @@ router.post('/', requireAuth, async (req, res) => {
 
   try {
     // 1. Update position in AWS Location Tracker
-    await trackerService.updatePosition(deviceId, latitude, longitude);
+    await trackerService.updatePosition(deviceId, latitude, longitude, accuracy, speed, heading, sampleTime);
 
     // 2. Evaluate if user entered any danger zones (Geofences)
     await geofenceService.evaluatePosition(deviceId, latitude, longitude);
