@@ -1,8 +1,12 @@
 'use client';
+import { useState } from 'react';
+import Link from 'next/link';
 import MapComponent from '@/components/MapComponent';
 import ProtectedRoute from '@/components/ProtectedRoute';
+import SOSModal from '@/components/SOSModal';
 
 export default function DashboardPage() {
+  const [isSOSOpen, setIsSOSOpen] = useState(false);
   return (
     <ProtectedRoute>
       <main className="flex-grow relative bg-[#0a0a0a] overflow-hidden flex">
@@ -44,7 +48,10 @@ export default function DashboardPage() {
             </div>
           </div>
         </div>
+        </div>
       </main>
+      <SOSModal isOpen={isSOSOpen} onClose={() => setIsSOSOpen(false)} />
     </ProtectedRoute>
   );
 }
+
