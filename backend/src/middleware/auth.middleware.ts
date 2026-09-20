@@ -24,16 +24,19 @@ export const requireAuth = async (req: Request, res: Response, next: NextFunctio
   const token = authHeader.split(' ')[1];
 
   try {
-    if (!process.env.COGNITO_USER_POOL_ID || !process.env.COGNITO_USER_POOL_CLIENT_ID) {
+    const userPoolId = process.env.COGNITO_USER_POOL_ID;
+    const clientId = process.env.COGNITO_USER_POOL_CLIENT_ID || (process.env as any).COGNITO_USER_POOL_CLIENT;
+
+    if (!userPoolId || !clientId) {
       console.error("Backend missing Cognito Env Vars");
       return res.status(500).json({ error: "Server authentication misconfigured" });
     }
 
     if (!verifier) {
       verifier = CognitoJwtVerifier.create({
-        userPoolId: process.env.COGNITO_USER_POOL_ID,
+        userPoolId,
         tokenUse: "id",
-        clientId: process.env.COGNITO_USER_POOL_CLIENT_ID,
+        clientId,
       });
     }
 
